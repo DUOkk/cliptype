@@ -4,6 +4,10 @@
 
 ## 2026-07-21
 
+- 修复首次 CI 失败：三平台都挂在 `cargo fmt --check`（main.rs 一行过长），本地
+  `cargo fmt` 修复；顺带给 stub 阶段未读取的 `TypeOptions.interval` 加临时
+  `#[allow(dead_code)]`（CI clippy 带 `-D warnings`，Phase 1 实装后移除）。
+  本地已通过 fmt/clippy/build/test 全部四步。开发机新装了 rustup 稳定版工具链。
 - 制定项目文档体系：AGENTS.md（权威指引）、CLAUDE.md（精简镜像）、
   [docs/implementation-plan.md](docs/implementation-plan.md)（分 4 个 Phase 的实施计划）、本文件。
 - 确定核心设计原则：绝不在输出中泄露剪贴板内容（`--dry-run` 除外）；
