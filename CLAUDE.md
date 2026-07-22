@@ -5,8 +5,10 @@
 
 ## 这是什么
 
-跨平台 CLI（Rust）：读剪贴板文本 → 延迟 → 用 enigo 逐字符模拟键入，
-绕过禁止粘贴的输入框。macOS 为主要开发平台。计划见 [docs/implementation-plan.md](docs/implementation-plan.md)。
+"剪贴板转键盘输入"工具：读剪贴板文本 → 模拟键入，绕过禁止粘贴的输入框。
+**最终产品是平台原生常驻应用**（macOS = SwiftUI 应用本体 + 菜单栏；Windows 暂用
+Rust tray exe）；Rust CLI 是功能验证 + Linux 形态 + 原生应用同捆的键入引擎。
+macOS 为主要开发平台。计划见 [docs/implementation-plan.md](docs/implementation-plan.md)。
 
 ## 结构
 
@@ -17,6 +19,10 @@
 - [src/tray.rs](src/tray.rs) — feature `tray`（仅 macOS/Windows）：状态栏 UI
   （tray-icon + tao，菜单状态改动经 EventLoopProxy 回主线程）
 - [src/config.rs](src/config.rs) — 托盘设置持久化（std 手写解析，无新依赖）
+- [app/macos/](app/macos/) — SwiftUI 菜单栏应用（MenuBarExtra + Settings + Carbon 热键，
+  调用同捆 Rust 引擎；键入实现只在 Rust 侧维护）
+- [scripts/bundle-macos.sh](scripts/bundle-macos.sh) — 组装 dist/Cliptype.app
+  （LSUIElement、ad-hoc 签名，TCC 授权 App 一处即可）
 
 ## 关键规则
 

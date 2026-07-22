@@ -12,9 +12,14 @@
 
 ## 项目速览
 
-跨平台（macOS / Windows / Linux）的"剪贴板转键盘输入"CLI 工具：读取剪贴板文本，
-延迟数秒后逐字符模拟键入，用于禁止粘贴的输入框（远程桌面、VM、部分密码框等）。
-思路借鉴一个 Windows-only 的 AutoHotkey 小工具，但是**全新实现，不含任何原始代码**。
+跨平台"剪贴板转键盘输入"工具：读取剪贴板文本，模拟键入，用于禁止粘贴的输入框
+（远程桌面、VM、部分密码框等）。思路借鉴一个 Windows-only 的 AutoHotkey 小工具，
+但是**全新实现，不含任何原始代码**。
+
+**产品形态（2026-07-22 用户确定）**：最终产品是平台原生常驻应用；Rust CLI 是
+功能验证手段 + Linux 形态 + 各原生应用同捆的键入引擎。macOS = SwiftUI 应用
+（应用本体/设置窗口 + 常驻菜单栏）；Windows = 暂用 Rust tray exe，将来原生化；
+两平台界面独立维护、打包互不包含对方内容。
 
 - [src/main.rs](src/main.rs) — 入口：按参数分派到单次/热键/托盘模式。
 - [src/cli.rs](src/cli.rs) — clap derive 参数：`--delay` / `--interval` / `--dry-run` /
@@ -28,6 +33,11 @@
 - [src/config.rs](src/config.rs) — 托盘设置持久化（std 手写 key=value，无新依赖）。
 - 依赖用 target-specific dependencies 隔离：macOS 二进制不含 Windows UI 代码，
   反之亦然；Linux 构建完全不引入托盘依赖（GTK 太重，托盘不支持 Linux）。
+- [app/macos/](app/macos/) — SwiftUI 菜单栏应用（SwiftPM，macOS 14+）：MenuBarExtra +
+  Settings 窗口 + Carbon 热键；按热键时调用同捆的 Rust 引擎（`--delay 0` 单次模式）。
+  键入实现只在 Rust 侧维护，Swift 不重复实现。
+- [scripts/bundle-macos.sh](scripts/bundle-macos.sh) — 组装 dist/Cliptype.app
+  （LSUIElement、ad-hoc 签名；TCC 只需授权 App 一处，子进程引擎自动继承）。
 
 实施计划见 [docs/implementation-plan.md](docs/implementation-plan.md)，当前进度见 [PROGRESS.md](PROGRESS.md)。
 

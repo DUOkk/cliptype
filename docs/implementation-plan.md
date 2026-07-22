@@ -53,6 +53,26 @@
    证书（Apple Developer $99/年、Windows 代码签名证书），当前 CLI 阶段用 tar.gz/zip
    内置裸二进制是标准做法（ripgrep/fd/gh 同款）。
 
+## Phase 5: 平台原生应用（最终形态）
+
+> 方向修正（2026-07-22，用户）：CLI 只是功能验证手段和 Linux 形态，最终产品是
+> macOS / Windows 的常驻应用。macOS 需要"应用本体（设置窗口）+ 常驻菜单栏"两者。
+> 两平台界面各自独立维护，打包互不包含对方的东西。
+
+**架构**：Swift 负责全部 UI/热键/权限引导；Rust `cliptype` 二进制作为键入引擎同捆在
+.app 内（IME 迂回、尾部 flush、换行/Tab 处理不在 Swift 重复实现）。TCC 责任进程 =
+App 本体，用户只需授权 Cliptype.app 一处，子进程引擎自动继承。
+
+1. ✅ 2026-07-22 macOS SwiftUI App 骨架：`app/macos/`（SwiftPM，macOS 14+）——
+   MenuBarExtra 菜单栏常驻（暂停/速度/设置入口/退出）+ Settings 设置窗口
+   （热键预设、速度、权限状态）+ Carbon RegisterEventHotKey + 引擎调用
+   （`--delay 0` 单次模式）+ 首启动辅助功能授权弹窗。
+   `scripts/bundle-macos.sh` 组装 dist/Cliptype.app（LSUIElement、ad-hoc 签名）。
+   已端到端验证（模拟热键 → TextEdit 键入正确）。
+2. ⬜ 应用图标、任意热键录制 UI（当前为预设列表）、开机自启（SMAppService）。
+3. ⬜ release workflow 增加 .app 产物（zip）；将来配开发者证书做签名+公证+dmg。
+4. ⬜ Windows 原生界面（当前沿用 Rust tray exe 作为 Windows 界面）。
+
 ## 已知风险
 
 - enigo 0.2 在 macOS 对长文本 `.text()` 的可靠性未验证；不行就退回逐字符模式。

@@ -4,6 +4,18 @@
 
 ## 2026-07-22
 
+- **方向修正（用户）+ Phase 5 macOS 原生应用骨架完成**：CLI 定位改为"功能验证 +
+  Linux 形态"，最终产品是平台原生应用；macOS 要"应用本体（设置窗口）+ 常驻菜单栏"。
+  - 架构决定：SwiftUI App（`app/macos/`，SwiftPM）负责 UI/热键/权限引导，Rust 二进制
+    同捆为键入引擎（按热键时以 `--delay 0` 单次模式调用）。键入的坑（IME/尾部丢字/
+    换行 Tab）留在 Rust 一处，Swift 不重复实现。TCC 只需授权 Cliptype.app 一处。
+  - `scripts/bundle-macos.sh` → dist/Cliptype.app（LSUIElement 菜单栏应用、ad-hoc 签名）。
+  - 已端到端验证：模拟 ⌃⇧V → Carbon 热键 → 等修饰键松开 → 引擎 → TextEdit 键入
+    正确（日文/emoji）。菜单栏图标、Settings 窗口、暂停/速度切换就绪。
+  - 调试备忘：`log show --predicate` 看不到 NSLog 的场景下，直接在终端跑
+    `Cliptype.app/Contents/MacOS/CliptypeApp` 从 stderr 看日志最快。
+  - 待办：应用图标、任意热键录制、开机自启、release 产物集成、Windows 原生界面。
+
 - **v0.1.0 发布撤回**（用户反馈：尚未亲自验证，不到 release 的程度——发布这类对外
   动作以后必须先经用户确认）。GitHub Release 与 tag 均已删除，CHANGELOG 回退为
   Unreleased。release workflow 本身保留且已验证可用，等用户真机验证后重新打 tag。
