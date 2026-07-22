@@ -4,6 +4,23 @@
 
 ## 2026-07-22
 
+- **真实键入端到端验证通过**（用户授权辅助功能后，agent 用 AppleScript 驱动 TextEdit
+  自动化验证：键入 → 读回 → 比对 → 关闭不保存）。快速模式 3/3、逐字符模式 1/1 内容完整。
+  过程中发现并修复两个真实 bug：
+  1. **尾部丢字（竞态）**：发送完最后一个 CGEvent 后进程立即退出，未投递的事件随进程
+     消失，偶发丢失最后一段文本（enigo 块间只 sleep 2ms）。修复：type_text 结束前
+     等待 120ms 再返回。
+  2. **逐字符模式被 IME 截胡**：`Key::Unicode` 模拟物理键码，活跃的中文 IME 会拦截
+     组词（实测「日本語」→「啊啊啊」，空格/emoji 全丢）。修复：逐字符模式改用与快速
+     模式相同的 `text()`（unicode 字符串附加事件，IME 素通り），一次发一个字符。
+  - 已知无害现象：TextEdit 富文本模式的自动首字母大写会把行首小写字母改成大写
+    （line2→Line2），属于目标应用的替换功能，与 cliptype 无关；纯文本框不受影响。
+- **用户实测发现关键坑：未授权时静默失败**。真实键入测试"什么都没输入、无报错、正常退出"。
+  根因：enigo 0.2.1 在 macOS 上**完全不检查辅助功能权限**（源码里没有 AXIsProcessTrusted），
+  未授权时 CGEvent 被 OS 静默丢弃。修复：typer.rs 增加 `ensure_permission()`
+  （直接 FFI 调 ApplicationServices 的 `AXIsProcessTrusted`，无新依赖），main 在倒计时前
+  就检查，未授权立即报错并给出授权+重启终端的指引。已在沙盒（未授权环境）端到端验证
+  报错路径正确。注意：授权后必须完全退出并重开终端 App 才生效（README 已写明）。
 - **Phase 1 核心功能实装完成**：
   - `clipboard::read_text()` — arboard；空/非文本返回空字符串由 main 友好提示，不报错。
   - `typer::type_text()` — enigo；`interval==0` 走批量 `text()` 快速模式，`>0` 逐字符
