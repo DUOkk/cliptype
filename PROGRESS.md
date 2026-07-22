@@ -4,6 +4,15 @@
 
 ## 2026-07-22
 
+- **修复：授权后菜单栏仍显示"授予权限"警告**（用户实测发现）。两个叠加原因：
+  1. UI bug：菜单内容里直接调用 `AXIsProcessTrusted()`，不是可观察状态，权限变化
+     后 MenuBarExtra 不会重新渲染（Settings 窗口因后打开而显示正确）。修复：权限
+     状态提升为 AppState 的 `@Published var axTrusted`，2 秒轮询刷新（授权/撤销
+     都能反映）。
+  2. TCC 陷阱：ad-hoc 签名每次重新打包 cdhash 都变，macOS 视为不同应用，**之前的
+     授权直接失效**（系统设置里开关看似还开着但不生效）。缓解：bundle 脚本支持
+     `CODESIGN_ID` 环境变量（自签证书可保持授权跨构建有效）；ad-hoc 时脚本提示用
+     `tccutil reset Accessibility io.github.szyoo.cliptype` 清掉陈旧条目再重新授权。
 - **方向修正（用户）+ Phase 5 macOS 原生应用骨架完成**：CLI 定位改为"功能验证 +
   Linux 形态"，最终产品是平台原生应用；macOS 要"应用本体（设置窗口）+ 常驻菜单栏"。
   - 架构决定：SwiftUI App（`app/macos/`，SwiftPM）负责 UI/热键/权限引导，Rust 二进制
