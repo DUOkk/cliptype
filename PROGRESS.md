@@ -4,6 +4,12 @@
 
 ## 2026-07-22
 
+- **TCC 授权排查（用户在 Claude Code 桌面 App 内置终端测试）**：辅助功能授权按
+  "责任 App"归属，Claude 桌面版有两个独立 TCC 主体——主应用 `/Applications/Claude.app`
+  （用户终端的 shell 挂在它下面）和内嵌 CLI `…/Application Support/Claude/claude-code/…/claude.app`
+  （agent 工具进程挂在它下面）。只授权其中一个时会出现"agent 能打字、用户终端不能"。
+  解决：在辅助功能列表把两个都启用，或改用 Terminal.app/iTerm 并给其授权。
+  这也验证了 `ensure_permission()` 报错路径在真实用户场景下正常工作。
 - **真实键入端到端验证通过**（用户授权辅助功能后，agent 用 AppleScript 驱动 TextEdit
   自动化验证：键入 → 读回 → 比对 → 关闭不保存）。快速模式 3/3、逐字符模式 1/1 内容完整。
   过程中发现并修复两个真实 bug：
