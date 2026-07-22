@@ -16,11 +16,18 @@
 延迟数秒后逐字符模拟键入，用于禁止粘贴的输入框（远程桌面、VM、部分密码框等）。
 思路借鉴一个 Windows-only 的 AutoHotkey 小工具，但是**全新实现，不含任何原始代码**。
 
-- [src/main.rs](src/main.rs) — 入口：读剪贴板 → 延迟 → 键入；支持 `--dry-run`。
-- [src/cli.rs](src/cli.rs) — clap derive 参数：`--delay`(默认 2000ms) / `--interval`(默认 0) / `--dry-run`。
+- [src/main.rs](src/main.rs) — 入口：按参数分派到单次/热键/托盘模式。
+- [src/cli.rs](src/cli.rs) — clap derive 参数：`--delay` / `--interval` / `--dry-run` /
+  `--hotkey [COMBO]`（feature hotkey）/ `--tray`（feature tray）。
 - [src/clipboard.rs](src/clipboard.rs) — `read_text()`，用 `arboard`。
-- [src/typer.rs](src/typer.rs) — `type_text()`，用 `enigo`。
-- 可选 feature `hotkey`（`global-hotkey`）：常驻热键模式，后续实现。
+- [src/typer.rs](src/typer.rs) — `type_text()`（enigo）+ macOS 辅助功能权限检测。
+- [src/hotkey.rs](src/hotkey.rs) — feature `hotkey`：常驻热键模式（global-hotkey）。
+  macOS 事件循环必须用 Carbon `RunApplicationEventLoop`（见 PROGRESS 2026-07-22）。
+- [src/tray.rs](src/tray.rs) — feature `tray`（仅 macOS/Windows）：状态栏/托盘 UI
+  （tray-icon + tao），菜单改设置须在主线程（经 EventLoopProxy 转发）。
+- [src/config.rs](src/config.rs) — 托盘设置持久化（std 手写 key=value，无新依赖）。
+- 依赖用 target-specific dependencies 隔离：macOS 二进制不含 Windows UI 代码，
+  反之亦然；Linux 构建完全不引入托盘依赖（GTK 太重，托盘不支持 Linux）。
 
 实施计划见 [docs/implementation-plan.md](docs/implementation-plan.md)，当前进度见 [PROGRESS.md](PROGRESS.md)。
 

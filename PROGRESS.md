@@ -4,6 +4,22 @@
 
 ## 2026-07-22
 
+- **Phase 3.5 状态栏/托盘 UI 实装完成并 macOS 全链路真机验证**（`--features tray`）。
+  用户决策：macOS/Windows 各自原生界面、打包互不包含对方——用 tray-icon（各平台
+  原生 API 薄封装）+ Cargo target-specific dependencies 天然满足；Linux 不支持托盘
+  （GTK 依赖太重），CLI/热键模式不受影响。实现要点：
+  1. **菜单状态必须主线程改**：引入 tao 事件循环（tray 特性专用依赖），
+     `MenuEvent::set_event_handler` → `EventLoopProxy::send_event` 回主线程处理；
+     托盘图标须在 `StartCause::Init` 后创建；`ActivationPolicy::Accessory` 隐藏 Dock。
+  2. global-hotkey 在 tao 的 NSApp 事件循环下正常触发（与 Carbon
+     RunApplicationEventLoop 等效，验证过）。
+  3. 菜单：热键显示 / Pause（CheckMenuItem 点击自动翻转，读 is_checked 即可）/
+     速度预设 Fastest·20ms·50ms（手动 radio）/ Quit。图标是代码画的 32x32 键盘
+     glyph（macOS template image 自动适配深浅色，无外部资源）。
+  4. 设置持久化 [src/config.rs](src/config.rs)：std 手写 key=value（带单元测试），
+     `~/.config/cliptype/config.toml`；interval 决定顺序 = CLI 非零值 > 配置 > 0。
+  验证（AppleScript UI automation）：图标出现、菜单结构、Pause 后热键无输出、
+  恢复后正常、切速度写盘、Quit 干净退出。Windows 侧编译由 CI 覆盖，待实机验证。
 - **Phase 3 常驻热键模式实装完成并真机验证**（`--features hotkey`）。
   `cliptype --hotkey [COMBO]`，默认 `ctrl+shift+v`，组合键字符串用 global-hotkey 的
   FromStr（支持 `ctrl+shift+v` 简写）。结构：主线程注册 + 跑平台事件循环，worker

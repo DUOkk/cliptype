@@ -32,6 +32,16 @@
 3. ✅ 常驻时按热键 = 等修饰键松开后立即"读剪贴板→键入"（`--delay` 在此模式无效）。
 4. ✅ README 增加 hotkey 模式用法。
 
+## Phase 3.5: 状态栏/托盘 UI（feature = `tray`，macOS/Windows）— ✅ 2026-07-22 完成
+
+1. ✅ `--tray`：热键常驻 + 原生状态栏图标（tray-icon + tao，target-specific deps，
+   两平台二进制互不包含对方 UI 代码；Linux 不支持托盘）。
+2. ✅ 菜单：当前热键显示、Pause/Resume、打字速度预设（Fastest/20ms/50ms）、Quit。
+3. ✅ 设置持久化：`~/.config/cliptype/config.toml`（Windows `%APPDATA%\cliptype\`），
+   std 手写 key=value 解析（有单元测试），坏文件静默回退默认值。
+4. ✅ macOS 全链路真机验证（图标、菜单、暂停/恢复、持久化、退出）。
+   Windows 待实机验证。
+
 ## Phase 4: 发布与打磨
 
 1. GitHub Actions release workflow：打 tag → 构建三平台二进制 → 上传 Release。
