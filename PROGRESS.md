@@ -4,6 +4,13 @@
 
 ## 2026-07-22
 
+- **Phase 4 发布准备完成，v0.1.0 发布**：
+  - `--speed fast|normal|slow` 预设（映射 0/20/50ms，与托盘菜单一致；与 `--interval`
+    互斥，clap conflicts_with，带单元测试）。
+  - [release.yml](.github/workflows/release.yml)：`v*` tag 触发，四个 target
+    （macOS arm64/x64 + Windows x64 + Linux x64），macOS/Windows 带 tray，Linux 带
+    hotkey；tar.gz/zip + sha256，softprops/action-gh-release 建 Release。
+  - CHANGELOG Unreleased → 0.1.0。crates.io / Homebrew 暂缓（计划里本来就是可选）。
 - **Phase 3.5 状态栏/托盘 UI 实装完成并 macOS 全链路真机验证**（`--features tray`）。
   用户决策：macOS/Windows 各自原生界面、打包互不包含对方——用 tray-icon（各平台
   原生 API 薄封装）+ Cargo target-specific dependencies 天然满足；Linux 不支持托盘

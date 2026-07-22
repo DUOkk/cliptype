@@ -42,11 +42,11 @@
 4. ✅ macOS 全链路真机验证（图标、菜单、暂停/恢复、持久化、退出）。
    Windows 待实机验证。
 
-## Phase 4: 发布与打磨
+## Phase 4: 发布与打磨 — ✅ 2026-07-22 完成（可选项除外）
 
-1. GitHub Actions release workflow：打 tag → 构建三平台二进制 → 上传 Release。
-2. 打字速度预设：`--speed slow|normal|fast` 映射到 interval 值。
-3. （可选）发布到 crates.io / Homebrew tap。
+1. ✅ GitHub Actions release workflow：打 tag → 四 target 二进制 + sha256 → Release。
+2. ✅ 打字速度预设：`--speed fast|normal|slow` 映射 0/20/50ms（与托盘菜单一致）。
+3. ⬜（可选）发布到 crates.io / Homebrew tap。
 
 ## 已知风险
 
