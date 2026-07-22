@@ -24,12 +24,13 @@
 3. 特殊字符边界情况：IME 干扰、目标应用吞字（interval 建议值写进 README）。
 4. `--interval` 下的进度反馈（长文本时 stderr 显示进度，不显示内容本身）。
 
-## Phase 3: 常驻热键模式（feature = `hotkey`）
+## Phase 3: 常驻热键模式（feature = `hotkey`）— ✅ 2026-07-22 完成
 
-1. `--hotkey <COMBO>` 参数（仅 `--features hotkey` 编译时存在）。
-2. `global-hotkey` 事件循环；注意 macOS 要求在主线程跑 event loop。
-3. 常驻时按热键 = 立即执行"读剪贴板→键入"（无 delay 或短 delay，因为焦点已就位）。
-4. README 增加 daemon 模式用法。
+1. ✅ `--hotkey [COMBO]` 参数（仅 `--features hotkey` 编译时存在，默认 `ctrl+shift+v`）。
+2. ✅ `global-hotkey` 事件循环。macOS 必须用 Carbon `RunApplicationEventLoop`
+   （裸 CFRunLoopRun 不分发应用目标事件，详见 PROGRESS.md 2026-07-22）。
+3. ✅ 常驻时按热键 = 等修饰键松开后立即"读剪贴板→键入"（`--delay` 在此模式无效）。
+4. ✅ README 增加 hotkey 模式用法。
 
 ## Phase 4: 发布与打磨
 

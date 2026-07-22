@@ -4,6 +4,20 @@
 
 ## 2026-07-22
 
+- **Phase 3 常驻热键模式实装完成并真机验证**（`--features hotkey`）。
+  `cliptype --hotkey [COMBO]`，默认 `ctrl+shift+v`，组合键字符串用 global-hotkey 的
+  FromStr（支持 `ctrl+shift+v` 简写）。结构：主线程注册 + 跑平台事件循环，worker
+  线程收 crossbeam channel 事件，每次按下现读剪贴板→键入；单次失败只打日志不退出。
+  两个关键实现点：
+  1. **macOS 事件循环必须用 Carbon 的 `RunApplicationEventLoop()`**，不能用裸
+     `CFRunLoopRun()`——global-hotkey 把 handler 装在 `GetApplicationEventTarget()`
+     上，裸 run loop 不分发应用目标事件（实测：CFRunLoopRun 下热键完全无响应）。
+  2. **键入前等修饰键松开**：macOS 轮询 `CGEventSourceFlagsState`（HID 状态，上限
+     2s + 50ms 余量），其他平台固定等 300ms，避免用户还按着 Ctrl/Shift 时合成事件
+     被物理修饰键污染。
+  验证：AppleScript System Events 模拟 ctrl+shift+v（合成按键能触发
+  RegisterEventHotKey），TextEdit 中两次触发均正确键入（含日文/emoji）。
+  CI 增加 `--features hotkey` 构建与 `--all-features` clippy/test。
 - **TCC 授权排查（用户在 Claude Code 桌面 App 内置终端测试）**：辅助功能授权按
   "责任 App"归属，Claude 桌面版有两个独立 TCC 主体——主应用 `/Applications/Claude.app`
   （用户终端的 shell 挂在它下面）和内嵌 CLI `…/Application Support/Claude/claude-code/…/claude.app`
