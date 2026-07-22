@@ -42,11 +42,16 @@
 4. ✅ macOS 全链路真机验证（图标、菜单、暂停/恢复、持久化、退出）。
    Windows 待实机验证。
 
-## Phase 4: 发布与打磨 — ✅ 2026-07-22 完成（可选项除外）
+## Phase 4: 发布与打磨 — 基础设施就绪，正式发布待用户亲自验证
 
-1. ✅ GitHub Actions release workflow：打 tag → 四 target 二进制 + sha256 → Release。
+1. ✅ GitHub Actions release workflow：打 tag → 四 target 二进制 + sha256 → Release
+   （workflow 已用临时 tag 全流程验证过，产物可下载可运行，随后撤回）。
 2. ✅ 打字速度预设：`--speed fast|normal|slow` 映射 0/20/50ms（与托盘菜单一致）。
-3. ⬜（可选）发布到 crates.io / Homebrew tap。
+3. ⬜ **v0.1.0 正式 tag：等用户在真机亲自验证单次/热键/托盘模式后再打。**
+4. ⬜（可选）发布到 crates.io / Homebrew tap。
+5. ⬜（可选，远期）macOS .app bundle + 签名公证 / Windows 安装器——需要付费开发者
+   证书（Apple Developer $99/年、Windows 代码签名证书），当前 CLI 阶段用 tar.gz/zip
+   内置裸二进制是标准做法（ripgrep/fd/gh 同款）。
 
 ## 已知风险
 

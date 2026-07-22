@@ -4,7 +4,13 @@
 
 ## 2026-07-22
 
-- **Phase 4 发布准备完成，v0.1.0 发布**：
+- **v0.1.0 发布撤回**（用户反馈：尚未亲自验证，不到 release 的程度——发布这类对外
+  动作以后必须先经用户确认）。GitHub Release 与 tag 均已删除，CHANGELOG 回退为
+  Unreleased。release workflow 本身保留且已验证可用，等用户真机验证后重新打 tag。
+  工件格式决定：CLI 阶段维持 tar.gz/zip 内置裸二进制（ripgrep/gh 等同款惯例；
+  Windows zip 里就是 cliptype.exe）；.pkg/.msi 安装器需要付费签名证书否则
+  Gatekeeper/SmartScreen 警告更吓人，列为远期可选项。
+- **Phase 4 发布准备完成（基础设施）**：
   - `--speed fast|normal|slow` 预设（映射 0/20/50ms，与托盘菜单一致；与 `--interval`
     互斥，clap conflicts_with，带单元测试）。
   - [release.yml](.github/workflows/release.yml)：`v*` tag 触发，四个 target
