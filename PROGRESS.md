@@ -4,6 +4,10 @@
 
 ## 2026-08-07
 
+- **v0.1.0 正式发布**（用户亲自验证 App 后拍板）：
+  https://github.com/Szyoo/cliptype/releases/tag/v0.1.0 ——六个产物全部构建成功
+  （macOS app universal zip + CLI 三平台四包 + sha256），已下载 app 包核验：
+  双架构 fat binary、三语 lproj 齐全、签名标识正确。CHANGELOG 0.1.0 定稿。
 - **发行与文档重构（用户要求）**：
   1. README 改为**中文默认**（README.md 中文 + README.en.md 英文镜像）。
   2. 安装章节明确区分 macOS 两种方式并各配教程：方式一装 Cliptype.app（授权
