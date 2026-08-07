@@ -47,6 +47,11 @@
 - **代码注释**：日语（用户个人偏好，遵循既有代码风格）；标识符、变量名用英文。
 - **git / 面向公众的文本**：这是开源项目——commit message、PR、README、错误提示等
   用户可见输出一律用英文。
+- **README 双语**：README.md（英文，主）+ README.zh-CN.md（中文镜像），顶部互链；
+  改 README 内容必须同步两份。
+- **App 界面多语言**：SwiftUI 文案一律经 `L()` 助手（[app/macos/.../L10n.swift](app/macos/Sources/CliptypeApp/L10n.swift)），
+  键 = 英文原文；翻译在 `Resources/{en,zh-Hans,ja}.lproj/Localizable.strings`，
+  新增 UI 文案必须三语同步。
 
 ## 核心设计原则
 

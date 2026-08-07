@@ -27,6 +27,8 @@ macOS 为主要开发平台。计划见 [docs/implementation-plan.md](docs/imple
 ## 关键规则
 
 1. **对话中文；代码注释日语；commit/PR/README/错误提示英文**（开源项目）。
+   README 双语（README.md 英文 + README.zh-CN.md，改动同步两份）；App 界面文案
+   经 `L()` 本地化，en/zh-Hans/ja 三语同步（app/macos/.../Resources/*.lproj）。
 2. **绝不在日志/错误/输出里泄露剪贴板内容**（可能是密码），`--dry-run` 是唯一例外。
 3. 三平台必须能编译（托盘依赖是 target-specific，Linux 不含）；
    提交前 `cargo fmt` + `cargo clippy --all-features -- -D warnings`。

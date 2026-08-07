@@ -4,6 +4,13 @@
 
 ## 2026-07-22
 
+- **国际化（用户要求）**：
+  1. README 双语：README.md（英）+ README.zh-CN.md（中），顶部互链切换。
+  2. App 界面本地化 en/zh-Hans/ja：SwiftPM `defaultLocalization` + `Resources/*.lproj`
+     + `L()` 助手（键=英文原文，`Bundle.module` 查找），bundle 脚本同捆
+     `CliptypeApp_CliptypeApp.bundle`，Info.plist 声明 CFBundleLocalizations。
+     已实测：`--args -AppleLanguages "(zh-Hans)"/"(ja)"` 菜单分别显示中/日文。
+     字体无需处理——macOS 系统字体自带全语言覆盖。
 - **App 形态调整（用户反馈）**：
   1. 增加**应用本体主窗口**（状态头部 + 设置表单），去掉 LSUIElement——现在是常规
      应用：Dock 有图标、启动显示窗口、关窗后菜单栏继续常驻、点 Dock 或菜单
