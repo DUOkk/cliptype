@@ -2,8 +2,16 @@
 
 > 最新在上；绝对日期；记录实质进展、技术决策、卡点。规则见 [AGENTS.md](AGENTS.md)。
 
-## 2026-07-22
+## 2026-08-07
 
+- **发行与文档重构（用户要求）**：
+  1. README 改为**中文默认**（README.md 中文 + README.en.md 英文镜像）。
+  2. 安装章节明确区分 macOS 两种方式并各配教程：方式一装 Cliptype.app（授权
+     Cliptype 一处）；方式二终端 CLI（授权终端 App）。两种授权互相独立。
+  3. Release 增加 macOS 应用打包物：`bundle-macos.sh` 支持 `BUILD_UNIVERSAL=1`
+     （rust 双 target + lipo，swift `--arch arm64 --arch x86_64`），release
+     workflow 新增 build-macos-app 任务，产出
+     `cliptype-<tag>-macos-app-universal.zip`（ditto 打包 + sha256）。
 - **国际化（用户要求）**：
   1. README 双语：README.md（英）+ README.zh-CN.md（中），顶部互链切换。
   2. App 界面本地化 en/zh-Hans/ja：SwiftPM `defaultLocalization` + `Resources/*.lproj`
