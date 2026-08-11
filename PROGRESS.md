@@ -2,6 +2,15 @@
 
 > 最新在上；绝对日期；记录实质进展、技术决策、卡点。规则见 [AGENTS.md](AGENTS.md)。
 
+## 2026-08-12
+
+- **应用图标完成**：设计 = 蓝色渐变 squircle + 白色剪贴板 + 输入光标（剪贴板→键入的
+  意象）。源文件 [assets/appicon.svg](assets/appicon.svg)，
+  [scripts/make-icon.sh](scripts/make-icon.sh) 用纯系统工具（qlmanage 栅格化 +
+  sips 缩放 + iconutil 打包）生成 app/macos/AppIcon.icns（10 尺寸），bundle 脚本
+  同捆并在 Info.plist 声明 CFBundleIconFile。README 顶部同时展示。
+  备忘：机器上没有 rsvg/imagemagick，qlmanage -t 可栅格化 SVG，够用。
+
 ## 2026-08-07
 
 - **v0.1.0 正式发布**（用户亲自验证 App 后拍板）：

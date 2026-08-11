@@ -69,7 +69,9 @@ App 本体，用户只需授权 Cliptype.app 一处，子进程引擎自动继�
    （`--delay 0` 单次模式）+ 首启动辅助功能授权弹窗。
    `scripts/bundle-macos.sh` 组装 dist/Cliptype.app（LSUIElement、ad-hoc 签名）。
    已端到端验证（模拟热键 → TextEdit 键入正确）。
-2. ⬜ 应用图标、任意热键录制 UI（当前为预设列表）、开机自启（SMAppService）。
+2. ⬜ 任意热键录制 UI（当前为预设列表）、开机自启（SMAppService）。
+   ✅ 2026-08-12 应用图标：assets/appicon.svg 源 + scripts/make-icon.sh
+   （qlmanage+sips+iconutil，纯系统工具）生成 app/macos/AppIcon.icns。
 3. ⬜ release workflow 增加 .app 产物（zip）；将来配开发者证书做签名+公证+dmg。
 4. ⬜ Windows 原生界面（当前沿用 Rust tray exe 作为 Windows 界面）。
 
