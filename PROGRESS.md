@@ -4,6 +4,13 @@
 
 ## 2026-09-11
 
+- **Release 正文改为 CHANGELOG 文本 + CHANGELOG 双语化**（用户反馈"为啥指向 commit"）。
+  原因：release.yml 用了 `generate_release_notes: true`，GitHub 只会罗列 commit/PR。
+  改为 [scripts/release-notes.sh](scripts/release-notes.sh) 从 CHANGELOG 抽取该版本
+  小节（中英并列 + 完整日志链接），workflow 里 `body_path` 传入（release job 原本
+  没有 checkout，一并补上）。CHANGELOG 按 README 惯例拆成 CHANGELOG.md（中文默认）
+  + CHANGELOG.en.md，顺手修好了 0.1.0 段落里掉出小节标题的一批条目。已回填 v0.1.0
+  和 v0.1.1 两个 Release 的正文。注意：这段文本也会显示在应用内更新弹窗里。
 - **v0.1.1 发布**（用户拍板）：https://github.com/Szyoo/cliptype/releases/tag/v0.1.1
   内容 = VNC/远程控制台修复（`--mode keycode`）+ 应用图标 + 应用内更新。10 个产物
   （macOS app universal zip + 四平台 CLI，各带 sha256）全部构建成功。这是应用内更新

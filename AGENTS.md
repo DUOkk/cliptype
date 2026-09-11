@@ -61,6 +61,11 @@
 - **README 双语（中文为默认）**：README.md（中文，仓库默认展示）+ README.en.md
   （英文镜像），顶部互链；改 README 内容必须同步两份。安装章节必须区分
   macOS 的两种方式（装应用 / 终端 CLI）并各配教程。
+- **CHANGELOG 同样双语**：CHANGELOG.md（中文）+ CHANGELOG.en.md（英文），两份同步。
+  条目写"用户看得懂的变化"，不是 commit 摘要。GitHub Release 正文由
+  [scripts/release-notes.sh](scripts/release-notes.sh) 从两份 CHANGELOG 抽取该版本
+  小节生成（中英并列），**不要**用 `generate_release_notes`（那只会罗列 commit）。
+  这段正文也会原样显示在应用内更新弹窗里。
 - **App 界面多语言**：SwiftUI 文案一律经 `L()` 助手（[app/macos/.../L10n.swift](app/macos/Sources/CliptypeApp/L10n.swift)），
   键 = 英文原文；翻译在 `Resources/{en,zh-Hans,ja}.lproj/Localizable.strings`，
   新增 UI 文案必须三语同步。
