@@ -42,6 +42,11 @@
 - [app/macos/](app/macos/) — SwiftUI 菜单栏应用（SwiftPM，macOS 14+）：MenuBarExtra +
   Settings 窗口 + Carbon 热键；按热键时调用同捆的 Rust 引擎（`--delay 0` 单次模式）。
   键入实现只在 Rust 侧维护，Swift 不重复实现。
+- [app/macos/.../Updater.swift](app/macos/Sources/CliptypeApp/Updater.swift) — 应用内更新：
+  查 GitHub Releases latest → 下载 `*-macos-app-universal.zip` → 对照同一 Release 的
+  `.sha256` 校验 → ditto 解压 → 独立 bash 助手等主进程退出后替换 .app、清 quarantine、
+  `tccutil reset` 我们的 bundle id、`open` 重启。资产文件名后缀与 release.yml 耦合，
+  改名要两边同步。不用 Sparkle（签名密钥 + appcast 运维过重）。
 - [scripts/bundle-macos.sh](scripts/bundle-macos.sh) — 组装 dist/Cliptype.app
   （LSUIElement、ad-hoc 签名；TCC 只需授权 App 一处，子进程引擎自动继承）。
 

@@ -4,6 +4,25 @@
 
 ## 2026-09-11
 
+- **应用内更新功能**（用户要求，"很多 macOS 软件都有"）。方案：不用 Sparkle（需要
+  EdDSA 密钥 + appcast 运维，对 ad-hoc 签名阶段过重），直接对接 GitHub Releases API，
+  复用现有发布产物和 `.sha256`。[Updater.swift](app/macos/Sources/CliptypeApp/Updater.swift)：
+  - 启动 5s 后静默检查 + 每 24h 一次（设置可关），菜单栏「Check for Updates…」/
+    设置「Check Now…」手动检查；设置里显示当前版本与状态；菜单栏标题行和主窗口
+    头部也显示版本号。
+  - 发现新版 → NSAlert 显示更新说明（下载并安装 / 以后 / 跳过此版本）→ 下载
+    `*-macos-app-universal.zip` → 对照同 Release 的 `.sha256`（CryptoKit）→ `ditto -x -k`
+    解压 → 「准备安装」确认 → 写入 bash 助手并启动 → 主进程退出 → 助手等 PID 消失后
+    `rm -rf` 旧 .app、`mv` 新 .app、清 quarantine、`tccutil reset` 本 bundle id、
+    `open` 重启、清理临时目录。重启后一次性重新弹辅助功能授权
+    （`promptPermissionOnNextLaunch`）。
+  - 安全装置：只替换 `.app` 且父目录可写（否则提示移到应用程序文件夹）；sha256 不匹配
+    直接失败。
+  - 验证：`APP_VERSION=0.0.9` 伪装旧版 → 自动发现 v0.1.0 → UI 脚本点两个按钮 →
+    dist/Cliptype.app 变为 0.1.0 并重启、无 quarantine、临时目录已清理。手动检查在
+    最新版上弹「已是最新」。
+  - 已知限制：ad-hoc 签名下每次更新都要重新授权辅助功能（有 Developer ID 后消失）；
+    资产文件名后缀 `-macos-app-universal.zip` 与 release.yml 耦合。
 - **Bug 修复：VNC 控制台里全部打成 "a"**（用户报告）。根因：enigo 的 `text()` 把
   Unicode 字符串附加在**键码固定为 0**（US 布局 = A）的 CGEvent 上；本机应用读
   Unicode 字符串所以正常，VNC/远程控制台/VM 只转发物理键码 → 每个字符都是 a。
