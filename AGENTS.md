@@ -26,6 +26,12 @@
   `--hotkey [COMBO]`（feature hotkey）/ `--tray`（feature tray）。
 - [src/clipboard.rs](src/clipboard.rs) — `read_text()`，用 `arboard`。
 - [src/typer.rs](src/typer.rs) — `type_text()`（enigo）+ macOS 辅助功能权限检测。
+  两种发送模式：`InputMode::Unicode`（默认；Unicode 文本事件，任意字符、IME 免疫，
+  但键码固定 0）与 `InputMode::Keycode`（真实键码 + Shift/Option；VNC / 远程控制台 /
+  VM 只转发键码，不开此模式全变 "a"）。
+- [src/keymap.rs](src/keymap.rs) — macOS 专用：用 `UCKeyTranslate` 按当前键盘布局
+  建"字符→键码+修饰键"表；`AsciiInputSourceGuard` 发送期间临时切到 ASCII 输入源
+  避开 IME，结束恢复。全部 Carbon FFI，无新依赖。
 - [src/hotkey.rs](src/hotkey.rs) — feature `hotkey`：常驻热键模式（global-hotkey）。
   macOS 事件循环必须用 Carbon `RunApplicationEventLoop`（见 PROGRESS 2026-07-22）。
 - [src/tray.rs](src/tray.rs) — feature `tray`（仅 macOS/Windows）：状态栏/托盘 UI

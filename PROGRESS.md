@@ -2,6 +2,28 @@
 
 > 最新在上；绝对日期；记录实质进展、技术决策、卡点。规则见 [AGENTS.md](AGENTS.md)。
 
+## 2026-09-11
+
+- **Bug 修复：VNC 控制台里全部打成 "a"**（用户报告）。根因：enigo 的 `text()` 把
+  Unicode 字符串附加在**键码固定为 0**（US 布局 = A）的 CGEvent 上；本机应用读
+  Unicode 字符串所以正常，VNC/远程控制台/VM 只转发物理键码 → 每个字符都是 a。
+  enigo 自带的 `Key::Unicode` 键码路径也不可用：查到键码后不按 Shift、查不到返回
+  0、字符缓冲区只有 1 字节。修复：
+  1. 新增 [src/keymap.rs](src/keymap.rs)（macOS）：用 Carbon `UCKeyTranslate` 遍历
+     当前键盘布局 0..127 键码 ×（无/Shift/Option/Option+Shift）建 字符→键码 表；
+     `AsciiInputSourceGuard` 在发送期间 `TISSelectInputSource` 切到 ASCII 输入源、
+     drop 时恢复（否则中文 IME 会截胡实键按下）。
+  2. typer 新增 `InputMode::Keycode`：实键 + 修饰键（enigo `raw()` + Shift/Alt
+     Press/Release，出错也保证释放修饰键）；布局上没有的字符回退 Unicode 并警告
+     一次。非 macOS 走 enigo `Key::Unicode`（Windows 用 VkKeyScan 尚可）。
+  3. CLI `--mode unicode|keycode`（默认 unicode）贯通单次/热键/托盘；托盘菜单加
+     "Remote console mode" 勾选项并持久化（config 新增 `keycode_mode`）；Swift App
+     设置窗口新增"兼容性"分区 + 菜单栏开关，三语文案同步，引擎调用传 `--mode`。
+  - 验证：TextEdit 中 `Hello World! Foo_bar=42 {x}\tTab\nEND 日本` 键码模式输出
+    完全一致（含大小写/符号/Tab/换行），中文按预期回退，微信输入法在发送后恢复。
+  - 设计取舍：unicode 仍为默认（任意字符 + IME 免疫），keycode 需要用户显式开启，
+    因为它受布局限制且本机与远端布局不一致时符号会错位（这一点无法在本端解决）。
+
 ## 2026-08-12
 
 - **应用图标完成**：设计 = 蓝色渐变 squircle + 白色剪贴板 + 输入光标（剪贴板→键入的

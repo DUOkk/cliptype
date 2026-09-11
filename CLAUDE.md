@@ -13,7 +13,9 @@ macOS 为主要开发平台。计划见 [docs/implementation-plan.md](docs/imple
 ## 结构
 
 - [src/main.rs](src/main.rs) — 入口，按参数分派；[src/cli.rs](src/cli.rs) — clap 参数
-- [src/clipboard.rs](src/clipboard.rs) — arboard 读剪贴板；[src/typer.rs](src/typer.rs) — enigo 键入 + macOS 权限检测
+- [src/clipboard.rs](src/clipboard.rs) — arboard 读剪贴板；[src/typer.rs](src/typer.rs) — enigo 键入 + macOS 权限检测；
+  两种发送模式：`unicode`（默认，任意字符/IME 免疫）与 `keycode`（真实键码，VNC/远程控制台/VM 必需）
+- [src/keymap.rs](src/keymap.rs) — macOS：键盘布局→键码查表（UCKeyTranslate）+ 发送期间临时切 ASCII 输入源
 - [src/hotkey.rs](src/hotkey.rs) — feature `hotkey`：常驻热键（macOS 事件循环必须用
   Carbon `RunApplicationEventLoop`，见 PROGRESS）
 - [src/tray.rs](src/tray.rs) — feature `tray`（仅 macOS/Windows）：状态栏 UI
