@@ -4,6 +4,16 @@
 
 ## 2026-09-11
 
+- **v0.1.1 发布**（用户拍板）：https://github.com/Szyoo/cliptype/releases/tag/v0.1.1
+  内容 = VNC/远程控制台修复（`--mode keycode`）+ 应用图标 + 应用内更新。10 个产物
+  （macOS app universal zip + 四平台 CLI，各带 sha256）全部构建成功。这是应用内更新
+  首次面对真实 Release：用户机器上的 0.1.0 开发版通过菜单「检查更新」→ 下载校验 →
+  替换重启，升级为官方 v0.1.1（universal、临时目录清理干净）。
+  - **新发现：TCC 保护文件夹会卡住替换**。App 以自身身份（`open`）启动时，若 .app 位于
+    ~/Documents、~/Desktop、~/Downloads，助手的 `rm -rf` 会触发系统"访问文件夹"询问并
+    阻塞到用户点允许（此前测试都从终端启动、继承了沙盒权限所以没暴露）。/Applications
+    不受影响。缓解：「准备安装」弹窗检测到受保护路径时追加提示（点允许 / 建议放
+    应用程序文件夹），三语同步；README 安装教程本来就要求拖到应用程序。此改动进下一版。
 - **应用内更新功能**（用户要求，"很多 macOS 软件都有"）。方案：不用 Sparkle（需要
   EdDSA 密钥 + appcast 运维，对 ad-hoc 签名阶段过重），直接对接 GitHub Releases API，
   复用现有发布产物和 `.sha256`。[Updater.swift](app/macos/Sources/CliptypeApp/Updater.swift)：
