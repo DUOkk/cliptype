@@ -84,6 +84,14 @@
 
 - **macOS**（主要开发/验证平台）：模拟键入需要「系统设置 → 隐私与安全性 → 辅助功能」授权；
   未授权时 enigo 会静默失败或报错，错误提示里要引导用户去授权。
+  - **`AXIsProcessTrusted()` 在进程内被缓存**：运行中的进程看不到授权/撤销的变化
+    （实测两个方向都如此）。App 里判断权限一律走 `PermissionHelper.isTrustedFresh()`
+    ——起一个新进程跑引擎的 `--check-permission`，不要在 UI 里直接轮询 AX API。
+  - **TCC 记录绑定签名指纹**：ad-hoc 签名每次构建都变，更新替换 .app 后旧记录失效，
+    开关关开无效，必须 − 删除再 + 添加（客户报告确认）。`tccutil reset <bundle-id>`
+    对路径键控的记录可能无效，所以 UI 必须同时给出手动 − / + 步骤。
+  - 辅助功能属于高危权限，系统不提供一键「允许」弹窗，只能引导到系统设置——这是
+    Apple 的限制，不可自定义，不要再花时间找绕过办法。
 - **Linux (X11)**：需要 `libxdo-dev` 和 xcb 系列开发库（CI 已安装）；Wayland 支持有限，
   依赖 compositor，README 已说明。
 - **Windows**：无需额外配置。

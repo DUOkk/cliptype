@@ -4,6 +4,27 @@
 
 ## 2026-09-11
 
+- **客户报告：从 0.1.0 应用内更新到 0.1.1 后，辅助功能开关开着却"获取不到"权限；
+  开关关掉再开无效，最后 − 删除条目再 + 加回来才好。** 排查出两个叠加的 bug：
+  1. **TCC 记录陈旧（根因）**：ad-hoc 签名每次构建的 cdhash 不同；更新替换 .app 后，
+     TCC 里的旧记录仍绑定旧签名指纹，开关只改 auth 标志、不更新指纹 → 新版永远
+     匹配不上。更新助手里的 `tccutil reset Accessibility <bundle-id>` 对路径键控的
+     记录可能删不掉（客户机上即如此），只有 − / + 重建记录才行。修复：设置窗口权限区
+     常驻这套步骤 + 「帮我删除失效的条目」按钮；更新后 12 秒仍无权限则弹出明确的
+     − / + 引导（PermissionHelper.presentStaleRecordHelp）。
+  2. **`AXIsProcessTrusted()` 进程内缓存（加重问题）**：实测在本机 `tccutil reset`
+     撤销后，运行中的 App 仍报 trusted；反过来客户授权后 App 仍报 untrusted。之前的
+     2 秒轮询因此形同虚设，用户会以为授权没成功而反复折腾。修复：引擎新增
+     `--check-permission`（退出码 0/1），App 每 2 秒（已授权时每 10 秒）起一个新进程
+     查询——新进程会重新问 tccd，且子进程的责任进程是 App 本体，判定对象正确。
+  3. 顺带：openSystemSettings 改为多 URL 方案顺序尝试（跨 macOS 版本）。
+  - 用户提问"为什么有的权限能直接点允许，辅助功能却要手动进设置"：系统限制。
+    辅助功能/输入监控/屏幕录制/完全磁盘访问是高危权限，Apple 不提供一键允许，
+    应用只能弹带「打开系统设置」的引导框；无法自定义。已写进 README。
+  - 验证：本机撤销权限 → 新版 App 正确显示未授权（旧版会卡在 trusted）。授权后
+    的实时检测需要用户在系统设置里拨开关（agent 无法也不应代点），等用户操作确认。
+  - 注意：诊断过程中我在用户机器上执行了 `tccutil reset`，撤销了 Cliptype 的权限，
+    需要用户重新授权一次。
 - **Release 正文改为 CHANGELOG 文本 + CHANGELOG 双语化**（用户反馈"为啥指向 commit"）。
   原因：release.yml 用了 `generate_release_notes: true`，GitHub 只会罗列 commit/PR。
   改为 [scripts/release-notes.sh](scripts/release-notes.sh) 从 CHANGELOG 抽取该版本
