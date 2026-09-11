@@ -37,6 +37,8 @@ macOS 为主要开发平台。计划见 [docs/implementation-plan.md](docs/imple
    Release 正文由 [scripts/release-notes.sh](scripts/release-notes.sh) 从 CHANGELOG 生成，
    不用 GitHub 的 commit 自动生成。
 2. **绝不在日志/错误/输出里泄露剪贴板内容**（可能是密码），`--dry-run` 是唯一例外。
+   剪贴板历史（[ClipboardHistory.swift](app/macos/Sources/CliptypeApp/ClipboardHistory.swift)）
+   默认关闭、只存本机 0600、跳过 concealed 类型；传引擎走 `--stdin` 不走参数。
 3. 三平台必须能编译（托盘依赖是 target-specific，Linux 不含）；
    提交前 `cargo fmt` + `cargo clippy --all-features -- -D warnings`。
 4. macOS 键入需辅助功能授权，错误提示要引导用户授权。**`AXIsProcessTrusted()` 进程内缓存**，

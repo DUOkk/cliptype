@@ -4,6 +4,24 @@
 
 ## 2026-09-11
 
+- **v0.1.2 发布**（用户拍板）：https://github.com/Szyoo/cliptype/releases/tag/v0.1.2 ——
+  权限检测修复 + 陈旧 TCC 记录引导。10 个产物齐全；Release 正文首次由
+  `scripts/release-notes.sh` 从 CHANGELOG 生成（中英并列），CI 路径验证通过。
+- **剪贴板历史：基础框架完成**（用户要求；UI 形态弹窗/面板待定，先打基础）。
+  [ClipboardHistory.swift](app/macos/Sources/CliptypeApp/ClipboardHistory.swift)：
+  `ClipEntry` + `ClipboardHistory` 单例；0.5s 轮询 `NSPasteboard.changeCount`（macOS
+  无变更通知）；去重移顶；上限 20/50/100 条、单条 100 KB；跳过 concealed/transient
+  类型；持久化 `~/Library/Application Support/Cliptype/history.json`（0700/0600、原子写）；
+  **默认关闭**。API：`copyToPasteboard` / `type`（走引擎新 `--stdin`）/ `remove` / `clear`。
+  设置窗口「剪贴板历史」分区 + 菜单栏子菜单占位（最近 15 条，点选回填剪贴板）。
+  三语文案同步。详见 implementation-plan Phase 6。
+  - 验证：复制 4 段（含重复）→ 3 条、顺序正确、密码管理器 concealed 项被跳过、
+    文件 0600 / 目录 0700；子菜单列出条目、点选后剪贴板正确回填；`--stdin --dry-run`
+    读取正确。**`--stdin` 实际键入未能在本轮验证**——见下条。
+  - **测试坑：Mac 锁屏时所有模拟键入静默失败**（`CGSessionCopyCurrentDictionary` 的
+    `CGSSessionScreenIsLocked=true`；`activate` 无效、System Events 查不到前台进程），
+    引擎仍正常退出 0，极易误判为代码 bug。本轮排查了半小时才发现是用户离开锁屏了。
+    以后真机键入测试前先跑 `swift scratchpad/session.swift` 之类确认未锁屏。
 - **客户报告：从 0.1.0 应用内更新到 0.1.1 后，辅助功能开关开着却"获取不到"权限；
   开关关掉再开无效，最后 − 删除条目再 + 加回来才好。** 排查出两个叠加的 bug：
   1. **TCC 记录陈旧（根因）**：ad-hoc 签名每次构建的 cdhash 不同；更新替换 .app 后，

@@ -75,6 +75,31 @@ App 本体，用户只需授权 Cliptype.app 一处，子进程引擎自动继�
 3. ⬜ release workflow 增加 .app 产物（zip）；将来配开发者证书做签名+公证+dmg。
 4. ⬜ Windows 原生界面（当前沿用 Rust tray exe 作为 Windows 界面）。
 
+## Phase 6: 剪贴板历史（macOS 应用）
+
+> 用户要求（2026-09-11）。UI 形态（弹窗 / 面板 / 菜单）待定，先把基础层打好。
+
+**分层**：
+- 基础层 ✅ 2026-09-11 [ClipboardHistory.swift](../app/macos/Sources/CliptypeApp/ClipboardHistory.swift)：
+  `ClipEntry` 模型 + `ClipboardHistory` 单例（ObservableObject）。监视 = 0.5s 轮询
+  `NSPasteboard.changeCount`；去重（相同内容移到顶部）；件数上限 20/50/100；单条上限
+  100 KB；跳过 concealed / transient 类型（密码管理器约定）。持久化到
+  `~/Library/Application Support/Cliptype/history.json`（目录 0700、文件 0600、原子写）。
+  **默认关闭**，用户显式开启。
+- 操作 API ✅：`copyToPasteboard(entry)`（放回剪贴板 → 用平时的热键输入）、
+  `type(entry)`（直接键入，走引擎 `--stdin`，内容不经过剪贴板也不进进程参数）、
+  `remove` / `clear`。
+- 引擎 ✅：CLI 新增 `--stdin`（从标准输入读文本代替剪贴板）。
+- 设置 ✅：「剪贴板历史」分区——开关 + 隐私说明 + 件数上限 + 已保存条数 + 清空。
+- 占位 UI ✅：菜单栏子菜单列出最近 15 条（单行预览），点选放回剪贴板。
+
+**待定 / 后续**：
+1. ⬜ 最终 UI 形态：候选 (a) 热键呼出的浮动面板（类 Paste / Maccy，键盘上下选择 +
+   回车直接键入）；(b) 主窗口内的历史列表；(c) 维持菜单子菜单。建议 (a)。
+2. ⬜ 历史条目的直接键入热键（例如 ⌃⇧1…9 键入第 N 条）。
+3. ⬜ 搜索 / 置顶 / 排除特定应用（如密码管理器、终端）。
+4. ⬜ Windows 侧（Rust tray）对齐：可复用 history.json 格式。
+
 ## 已知风险
 
 - enigo 0.2 在 macOS 对长文本 `.text()` 的可靠性未验证；不行就退回逐字符模式。

@@ -47,6 +47,10 @@
   `.sha256` 校验 → ditto 解压 → 独立 bash 助手等主进程退出后替换 .app、清 quarantine、
   `tccutil reset` 我们的 bundle id、`open` 重启。资产文件名后缀与 release.yml 耦合，
   改名要两边同步。不用 Sparkle（签名密钥 + appcast 运维过重）。
+- [app/macos/.../ClipboardHistory.swift](app/macos/Sources/CliptypeApp/ClipboardHistory.swift) — 剪贴板
+  历史基础层（模型 + 0.5s changeCount 轮询 + JSON 持久化 + 操作 API）。**默认关闭**；
+  跳过 concealed/transient 类型；保存于 `~/Library/Application Support/Cliptype/history.json`
+  （0700/0600）。UI 形态待定，当前只有菜单子菜单占位。直接键入走引擎 `--stdin`。
 - [scripts/bundle-macos.sh](scripts/bundle-macos.sh) — 组装 dist/Cliptype.app
   （LSUIElement、ad-hoc 签名；TCC 只需授权 App 一处，子进程引擎自动继承）。
 
@@ -74,6 +78,9 @@
 
 1. **绝不泄露剪贴板内容**：剪贴板里可能是密码。除显式的 `--dry-run` 外，
    任何日志、错误信息、panic 输出都不得包含剪贴板文本（长度、字符数可以）。
+   剪贴板历史是唯一把内容落盘的功能：必须默认关闭、只存本机 Application Support
+   （0600）、跳过密码管理器的 concealed/transient 类型、随时可清空；向引擎传历史
+   条目一律走 stdin，不走命令行参数（`ps` 可见）。
 2. **默认安全**：键入前必须有可感知的延迟（默认 2000ms）并提示用户切换窗口；
    不做任何"自动聚焦目标窗口"的魔法。
 3. **跨平台一致**：新功能必须三平台都能编译（CI 会验证）；平台差异集中在模块内部处理，
@@ -103,3 +110,8 @@
 - 文本处理逻辑（换行归一化等）抽成纯函数写单元测试；依赖真实剪贴板/键盘的部分
   靠 `--dry-run` 和手动验证，不写脆弱的集成测试。
 - 测试真实键入时，先复制无害的测试文本；不要把测试用剪贴板内容写进文档或 commit。
+- **真机键入测试前先确认屏幕未锁定**：锁屏时模拟按键静默丢失、`activate` 无效、
+  引擎照样退出 0，看起来像代码 bug。用 `CGSessionCopyCurrentDictionary()` 的
+  `CGSSessionScreenIsLocked` 判断（见 PROGRESS 2026-09-11）。
+- 键入类测试必须先把焦点固定到测试窗口（TextEdit 新文档），否则会打进用户当前
+  聚焦的任意窗口。
