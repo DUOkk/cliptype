@@ -28,7 +28,7 @@
 
 ## 安装
 
-所有安装包都在 [GitHub Releases](https://github.com/Szyoo/cliptype/releases) 页面。
+所有安装包都在 [GitHub Releases](https://github.com/DUOkk/cliptype/releases) 页面。
 macOS 用户有两种使用方式，**任选其一**：
 
 ### macOS · 方式一：安装应用（推荐）
@@ -88,7 +88,7 @@ sudo apt-get install -y libxdo3   # Debian/Ubuntu 运行时
 需要 [Rust 工具链](https://rustup.rs/)；macOS 应用另需 Xcode 命令行工具。
 
 ```sh
-git clone https://github.com/Szyoo/cliptype
+git clone https://github.com/DUOkk/cliptype
 cd cliptype
 cargo build --release            # CLI，二进制在 target/release/cliptype
 scripts/bundle-macos.sh          # macOS 应用，产物在 dist/Cliptype.app
@@ -157,8 +157,44 @@ Linux 构建依赖：`libxdo-dev` 及 xcb 系列开发库（见 CI 配置）。
 - 剪贴板内容**只在本机**用于模拟键盘输入，不会上传到任何地方。
 - 剪贴板内容**绝不会**出现在日志、错误信息或终端输出里（剪贴板里可能是密码），
   唯一的例外是你显式指定的 `--dry-run`。
+- 剪贴板历史同样只存本机（Application Support，权限 0600），密码管理器标记为
+  隐藏 / 临时的内容**不会记录**，随时可在设置或浮窗中一键清空。
 - 程序唯一的网络访问是 macOS 应用的**检查更新**（访问 GitHub Releases），
   可在设置中关闭。CLI 完全不联网。
+
+## macOS 应用功能详解
+
+### 输入方式：键入 vs 仅粘贴文本
+
+- **模拟键入**（默认）：逐字符输入，禁止粘贴的输入框（远程桌面、虚拟机、
+  部分密码框）也能用——这是 cliptype 的本职。
+- **仅粘贴文本**：把纯文本写回剪贴板（自动剥离富文本格式）后按一次
+  <kbd>⌘V</kbd>。长文本瞬间完成、不带格式，但仅在允许粘贴的地方有效。
+  两种方式在设置和菜单栏均可一键切换，对主热键、历史条目、浮窗点选统一生效。
+
+### 剪贴板历史
+
+在设置中开启后，应用会记录你复制的文本（去重，默认保留最近 20 条，
+可选 20/50/100）：
+
+- **快捷键 + 数字**：按「修饰键前缀 + 数字 1–9、0」（默认 <kbd>⌃⇧</kbd>+数字）
+  直接输入对应的第 N 条记录，无需打开任何界面。
+- **菜单栏子菜单**：点选条目即直接输入。
+- 历史只存本机，跳过密码管理器的隐藏 / 临时内容，随时可清空。
+
+### 置顶浮窗
+
+可开关的常驻小窗，随时展示最近的复制记录（展示数量 5/10/15/20 可设）：
+
+- 点击条目即输入，**不抢焦点**——输入落在你当前聚焦的窗口；
+- 全桌面空间（Spaces）保持可见，可拖动到顺手的位置；
+- 支持单条删除与一键清空；上次的位置与可见状态重启后恢复。
+
+### 快捷键自定义
+
+所有快捷键（键入剪贴板 / 历史数字前缀 / 浮窗开关）都是**录制式**设置：
+点击设置中的输入框，按下你想要的组合即可完成绑定（<kbd>Esc</kbd> 取消录制，
+<kbd>⌫</kbd> 清除绑定）。组合被其他应用占用时会在设置中提示。
 
 ## CLI 用法
 
@@ -170,6 +206,8 @@ Options:
   -i, --interval <MS>   每个按键之间的间隔（毫秒）      [默认: 0]
   -s, --speed <SPEED>   打字速度预设  [可选值: fast, normal, slow]
   -m, --mode <MODE>     发送方式      [可选值: unicode, keycode]  [默认: unicode]
+  -a, --action <ACTION> 输入动作      [可选值: type, paste]  [默认: type]
+      --stdin           从标准输入读取文本（代替剪贴板；内容不进入进程参数）
       --dry-run         只打印将要输入的内容，不实际输入
   -h, --help            显示帮助
   -V, --version         显示版本
@@ -177,6 +215,24 @@ Options:
 
 `--speed` 是 `--interval` 的友好替代（fast = 无间隔，normal = 20 毫秒，
 slow = 50 毫秒——适合高速输入会吞字的应用）。
+
+`--action` 选择输入动作：
+
+- `type`（默认）：逐字符模拟键入，禁止粘贴的输入框也能用。
+- `paste`：把纯文本写回剪贴板（剥离富文本格式）后按一次 <kbd>⌘V</kbd>——
+  长文本瞬间完成，但仅在允许粘贴的地方有效。
+
+```sh
+# 复制一段文字，然后：
+cliptype --delay 3000
+# 3 秒内切换到目标窗口，剪贴板文本会被自动打出。
+
+# 粘贴纯文本（去除格式）而不是逐字键入：
+cliptype --action paste
+
+# 从管道输入（不经过剪贴板、不出现在 ps 里）：
+echo "some text" | cliptype --stdin
+```
 
 `--mode` 决定按键的发送方式：
 

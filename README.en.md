@@ -36,7 +36,7 @@ Cross-platform: **macOS** (native app + CLI), **Windows** (tray + CLI), and
 
 ## Install
 
-All packages are on the [GitHub Releases](https://github.com/Szyoo/cliptype/releases)
+All packages are on the [GitHub Releases](https://github.com/DUOkk/cliptype/releases)
 page. On macOS there are two ways to use cliptype — **pick either one**:
 
 ### macOS · Option 1: install the app (recommended)
@@ -107,7 +107,7 @@ Requires a [Rust toolchain](https://rustup.rs/); the macOS app additionally
 needs the Xcode command line tools.
 
 ```sh
-git clone https://github.com/Szyoo/cliptype
+git clone https://github.com/DUOkk/cliptype
 cd cliptype
 cargo build --release            # CLI, binary at target/release/cliptype
 scripts/bundle-macos.sh          # macOS app, output at dist/Cliptype.app
@@ -194,9 +194,56 @@ Keeping Cliptype in the **Applications** folder avoids this entirely.
 - Clipboard contents **never** appear in logs, error messages or terminal
   output (the clipboard may hold a password); the only exception is the
   `--dry-run` flag you pass explicitly.
+- The clipboard history is likewise local-only (Application Support, mode
+  0600); items that password managers mark as concealed or transient are
+  **never recorded**, and the history can be cleared at any time in Settings
+  or the floating window.
 - The only network access is the macOS app's **update check** (GitHub
   Releases), which can be disabled in Settings. The CLI makes no network
   requests.
+
+## macOS app feature guide
+
+### Input method: typing vs paste text only
+
+- **Simulated typing** (default): character-by-character input that works even
+  in fields that block pasting — that's what cliptype was built for.
+- **Paste text only**: writes the plain text back to the clipboard (stripping
+  rich formatting) and presses <kbd>⌘V</kbd> once. Instant for long texts and
+  formatting-free, but only works where pasting is allowed. Both methods are
+  switchable in Settings and the menu bar and apply uniformly to the main
+  hotkey, history items and floating-window picks.
+
+### Clipboard history
+
+Once enabled in Settings, the app records the text you copy (deduplicated,
+last 20 by default, 20/50/100 selectable):
+
+- **Hotkey + number**: press the modifier prefix plus a number key 1–9, 0
+  (default <kbd>⌃⇧</kbd>+number) to input that history item directly, without
+  opening any UI.
+- **Menu bar submenu**: picking an item inputs it directly.
+- Stored only on this Mac; concealed/transient items from password managers
+  are skipped; clearable at any time.
+
+### Floating history window
+
+An optional always-on-top window lists your recent copies (visible count
+5/10/15/20 selectable):
+
+- Click an item to input it — the window **never steals focus**, so the text
+  lands in whatever window you were working in;
+- Stays visible across all Spaces; drag it wherever suits you;
+- Per-item deletion and one-click clearing; position and visibility are
+  restored on relaunch.
+
+### Customizable shortcuts
+
+Every shortcut (type clipboard / history number prefix / toggle the floating
+window) is **recorded, not picked from presets**: click the field in Settings
+and press the combination you want (<kbd>Esc</kbd> cancels, <kbd>⌫</kbd>
+clears the binding). Combinations already taken by other apps are reported
+in Settings.
 
 ## CLI usage
 
@@ -208,6 +255,8 @@ Options:
   -i, --interval <MS>   Delay between keystrokes, in ms     [default: 0]
   -s, --speed <SPEED>   Typing speed preset  [possible values: fast, normal, slow]
   -m, --mode <MODE>     Delivery mode  [possible values: unicode, keycode]  [default: unicode]
+  -a, --action <ACTION> Input action  [possible values: type, paste]  [default: type]
+      --stdin           Read the text from stdin instead of the clipboard
       --dry-run         Print what would be typed instead of typing it
   -h, --help            Print help
   -V, --version         Print version
@@ -215,6 +264,26 @@ Options:
 
 `--speed` is a friendlier alternative to `--interval` (fast = no delay,
 normal = 20 ms, slow = 50 ms — for apps that drop keys at full speed).
+
+`--action` selects the input action:
+
+- `type` (default): types character by character — works even where pasting
+  is blocked.
+- `paste`: writes the plain text back to the clipboard (stripping rich
+  formatting) and presses <kbd>⌘V</kbd> once — instant for long texts, but
+  only works where pasting is allowed.
+
+```sh
+# Copy some text, then:
+cliptype --delay 3000
+# Switch to the target window within 3s; the clipboard text is typed in.
+
+# Paste plain text (formatting stripped) instead of typing:
+cliptype --action paste
+
+# Type from a pipe (never touches the clipboard, invisible to ps):
+echo "some text" | cliptype --stdin
+```
 
 `--mode` selects how keystrokes are delivered:
 

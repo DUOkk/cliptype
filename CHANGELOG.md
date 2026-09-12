@@ -7,7 +7,7 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [未发布]
+## [0.2.0] - 2026-09-12
 
 ### 新增
 - **输入方式：仅粘贴文本**：除逐字模拟键入（默认，禁止粘贴的输入框也能用）外，

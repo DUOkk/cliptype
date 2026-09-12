@@ -1,10 +1,10 @@
 [package]
 name = "cliptype"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 description = "Type the contents of your clipboard as simulated keystrokes. Cross-platform (macOS, Windows, Linux)."
 license = "MIT"
-repository = "https://github.com/Szyoo/cliptype"
+repository = "https://github.com/DUOkk/cliptype"
 readme = "README.md"
 keywords = ["clipboard", "keyboard", "automation", "paste", "input"]
 categories = ["command-line-utilities"]

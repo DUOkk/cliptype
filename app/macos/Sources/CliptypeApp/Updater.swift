@@ -19,7 +19,7 @@ final class Updater: ObservableObject {
     static let shared = Updater()
 
     /// GitHub リポジトリ（owner/name）
-    private let repo = "Szyoo/cliptype"
+    private let repo = "DUOkk/cliptype"
     /// macOS アプリ成果物のファイル名末尾（release.yml と揃える）
     private let assetSuffix = "-macos-app-universal.zip"
 
