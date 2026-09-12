@@ -23,12 +23,13 @@
 
 - [src/main.rs](src/main.rs) — 入口：按参数分派到单次/热键/托盘模式。
 - [src/cli.rs](src/cli.rs) — clap derive 参数：`--delay` / `--interval` / `--dry-run` /
-  `--hotkey [COMBO]`（feature hotkey）/ `--tray`（feature tray）。
-- [src/clipboard.rs](src/clipboard.rs) — `read_text()`，用 `arboard`。
-- [src/typer.rs](src/typer.rs) — `type_text()`（enigo）+ macOS 辅助功能权限检测。
+  `--action type|paste` / `--hotkey [COMBO]`（feature hotkey）/ `--tray`（feature tray）。
+- [src/clipboard.rs](src/clipboard.rs) — `read_text()` / `set_text()`，用 `arboard`。
+- [src/typer.rs](src/typer.rs) — `type_text()`（enigo）+ `paste_text()` + macOS 辅助功能权限检测。
   两种发送模式：`InputMode::Unicode`（默认；Unicode 文本事件，任意字符、IME 免疫，
   但键码固定 0）与 `InputMode::Keycode`（真实键码 + Shift/Option；VNC / 远程控制台 /
-  VM 只转发键码，不开此模式全变 "a"）。
+  VM 只转发键码，不开此模式全变 "a"）。`paste_text()`（`--action paste`）把纯文本写回
+  剪贴板（剥离富文本格式）后发一次 ⌘V/Ctrl+V（macOS 用实键码 9，VNC 安全）。
 - [src/keymap.rs](src/keymap.rs) — macOS 专用：用 `UCKeyTranslate` 按当前键盘布局
   建"字符→键码+修饰键"表；`AsciiInputSourceGuard` 发送期间临时切到 ASCII 输入源
   避开 IME，结束恢复。全部 Carbon FFI，无新依赖。
@@ -42,6 +43,15 @@
 - [app/macos/](app/macos/) — SwiftUI 菜单栏应用（SwiftPM，macOS 14+）：MenuBarExtra +
   Settings 窗口 + Carbon 热键；按热键时调用同捆的 Rust 引擎（`--delay 0` 单次模式）。
   键入实现只在 Rust 侧维护，Swift 不重复实现。
+- [app/macos/.../HotkeyCombo.swift](app/macos/Sources/CliptypeApp/HotkeyCombo.swift) /
+  [HotkeyRecorder.swift](app/macos/Sources/CliptypeApp/HotkeyRecorder.swift) /
+  [HotkeyManager.swift](app/macos/Sources/CliptypeApp/HotkeyManager.swift) — 快捷键体系：
+  组合模型（keyCode+修饰键，UserDefaults 持久化，v0.1.x 预设自动迁移）、录制式设置控件、
+  Carbon 多热键注册（多实例时按 EventHotKeyID 分发，否则所有 handler 都会触发）。
+  三组热键：主键入（默认 ⌃⇧V）、历史数字前缀（默认 ⌃⇧+1–9/0）、浮窗开关（默认 ⌃⇧H）。
+- [app/macos/.../FloatingHistoryWindow.swift](app/macos/Sources/CliptypeApp/FloatingHistoryWindow.swift) —
+  置顶浮窗：nonactivatingPanel（点击不激活 App、不抢前台焦点）+ 全 Space 可见 +
+  SwiftUI 内容（NSHostingView sizingOptions 跟随内容高度）；展示数量 5/10/15/20 可设。
 - [app/macos/.../Updater.swift](app/macos/Sources/CliptypeApp/Updater.swift) — 应用内更新：
   查 GitHub Releases latest → 下载 `*-macos-app-universal.zip` → 对照同一 Release 的
   `.sha256` 校验 → ditto 解压 → 独立 bash 助手等主进程退出后替换 .app、清 quarantine、
@@ -50,7 +60,8 @@
 - [app/macos/.../ClipboardHistory.swift](app/macos/Sources/CliptypeApp/ClipboardHistory.swift) — 剪贴板
   历史基础层（模型 + 0.5s changeCount 轮询 + JSON 持久化 + 操作 API）。**默认关闭**；
   跳过 concealed/transient 类型；保存于 `~/Library/Application Support/Cliptype/history.json`
-  （0700/0600）。UI 形态待定，当前只有菜单子菜单占位。直接键入走引擎 `--stdin`。
+  （0700/0600）。默认上限 20 条（可选 20/50/100）。直接键入走引擎 `--stdin`；
+  UI = 菜单子菜单 + 快捷键数字直接键入 + 置顶浮窗。
 - [scripts/bundle-macos.sh](scripts/bundle-macos.sh) — 组装 dist/Cliptype.app
   （LSUIElement、ad-hoc 签名；TCC 只需授权 App 一处，子进程引擎自动继承）。
 

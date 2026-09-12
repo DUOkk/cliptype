@@ -77,3 +77,27 @@
 "%d items stored" = "%d 件を保存中";
 "Clear history" = "履歴を消去";
 "No items yet" = "まだ項目がありません";
+
+/* 入力方式（貼り付け方法） */
+"Input method" = "入力方式";
+"Type as keystrokes" = "キー入力で打つ";
+"Paste text only (⌘V)" = "テキストのみ貼り付け（⌘V）";
+"Typing works even in input fields that block pasting — that is what cliptype was built for. \"Paste text only\" writes the plain text to the clipboard (stripping rich formatting) and presses ⌘V once: instant for long texts, but only works where pasting is allowed." = "キー入力は貼り付け禁止の入力欄でも動きます——これが cliptype の本来の目的です。「テキストのみ貼り付け」は平文をクリップボードへ書き戻し（リッチ書式を落とす）て ⌘V を 1 回押します。長文は一瞬ですが、貼り付けが許可された場所でしか使えません。";
+
+/* ショートカット（録音 UI） */
+"Shortcuts" = "ショートカット";
+"Type the clipboard" = "クリップボードを入力";
+"History item (number keys)" = "履歴項目（数字キー併用）";
+"Show the history window" = "履歴ウィンドウの表示";
+"None" = "なし";
+"Click a field, then press the key combination you want. Esc cancels recording; Backspace clears the shortcut. Combine the history prefix with the number keys 1–9 and 0 to input that history item." = "欄をクリックしてから、設定したいキーの組み合わせを押してください。Esc で録音をキャンセル、Backspace でショートカットを解除します。履歴の接頭辞と数字キー 1–9・0 を組み合わせると、対応する履歴項目を入力できます。";
+"⚠ %@ could not be registered — it may already be in use by another app." = "⚠ %@ を登録できませんでした——他のアプリが使用中の可能性があります。";
+
+/* フローティングウィンドウ */
+"Floating history window" = "履歴フローティングウィンドウ";
+"Shows an always-on-top window with your recent items. Click an item to input it; the window stays visible in every space." = "常に手前に表示されるウィンドウに最近の項目を一覧します。項目をクリックすると入力できます。ウィンドウは全スペースで表示され続けます。";
+"Items shown" = "表示件数";
+"Close" = "閉じる";
+"Clear" = "消去";
+"%d chars" = "%d 文字";
+"Delete this item" = "この項目を削除";

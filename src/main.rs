@@ -38,6 +38,7 @@ fn main() -> Result<()> {
             combo,
             Duration::from_millis(args.effective_interval_ms()),
             args.input_mode(),
+            args.action,
             args.dry_run,
         );
     }
@@ -49,6 +50,7 @@ fn main() -> Result<()> {
             combo,
             Duration::from_millis(args.effective_interval_ms()),
             args.input_mode(),
+            args.action,
             args.dry_run,
         );
     }
@@ -82,19 +84,29 @@ fn main() -> Result<()> {
     // 権限が無いならカウントダウンで待たせる前に失敗させる
     typer::ensure_permission()?;
 
-    // ウィンドウを切り替える猶予を与える
-    println!(
-        "Typing starts in {}ms — focus the target window now…",
-        args.delay
-    );
-    thread::sleep(Duration::from_millis(args.delay));
-
-    // キーストローク送信
-    let opts = typer::TypeOptions {
-        interval: Duration::from_millis(args.effective_interval_ms()),
-        mode: args.input_mode(),
-    };
-    typer::type_text(&text, &opts)?;
+    match args.action {
+        cli::Action::Type => {
+            // ウィンドウを切り替える猶予を与える
+            println!(
+                "Typing starts in {}ms — focus the target window now…",
+                args.delay
+            );
+            thread::sleep(Duration::from_millis(args.delay));
+            let opts = typer::TypeOptions {
+                interval: Duration::from_millis(args.effective_interval_ms()),
+                mode: args.input_mode(),
+            };
+            typer::type_text(&text, &opts)?;
+        }
+        cli::Action::Paste => {
+            println!(
+                "Pasting starts in {}ms — focus the target window now…",
+                args.delay
+            );
+            thread::sleep(Duration::from_millis(args.delay));
+            typer::paste_text(&text)?;
+        }
+    }
 
     Ok(())
 }

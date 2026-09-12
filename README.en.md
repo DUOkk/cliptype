@@ -17,6 +17,23 @@ Cross-platform: **macOS** (native app + CLI), **Windows** (tray + CLI), and
 > Status: implemented and verified on macOS; Windows/Linux runtime verification
 > is in progress. See the [Roadmap](#roadmap).
 
+## Features
+
+- **Simulated typing**: character-by-character input that works even in fields
+  that block pasting (remote desktops, VMs, password prompts). Alternatively,
+  switch to **paste text only** — strips rich formatting and presses
+  <kbd>⌘V</kbd> once, instant for long texts.
+- **Clipboard history** (off by default): keeps the last 20 copies (20/50/100
+  selectable), stored only on this Mac; a modifier + number key 1–9, 0
+  (default <kbd>⌃⇧</kbd>+number) inputs that item directly.
+- **Floating history window**: an optional always-on-top window lists recent
+  copies (visible count configurable); click an item to input it. It never
+  steals focus and stays visible across all Spaces.
+- **Customizable shortcuts**: every shortcut is recorded, not chosen from
+  presets — click the field and press the combination you want.
+- Cross-platform CLI: one-shot / resident hotkey / tray modes; in-app
+  auto-update (macOS).
+
 ## Install
 
 All packages are on the [GitHub Releases](https://github.com/Szyoo/cliptype/releases)
@@ -40,8 +57,9 @@ GUI + resident menu bar icon, best for everyday use.
    go to **System Settings → Privacy & Security → Accessibility** and enable
    **Cliptype** (this single entry also covers the bundled typing engine).
 5. Copy some text → focus the target field → press <kbd>⌃⇧V</kbd>.
-   The hotkey and typing speed are configurable in the main window or via the
-   menu bar icon → Settings.
+   All shortcuts, the input method (type / paste text only), clipboard history
+   and the floating window can be enabled and customized in the main window or
+   via the menu bar icon → Settings.
 
 Later versions **update themselves**: the app checks GitHub Releases on launch
 and every 24 hours (can be disabled in Settings), shows the release notes when

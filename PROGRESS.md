@@ -2,6 +2,45 @@
 
 > 最新在上；绝对日期；记录实质进展、技术决策、卡点。规则见 [AGENTS.md](AGENTS.md)。
 
+## 2026-09-12
+
+- **四大功能落地**（用户需求：仅粘贴文本 / 历史 20 条 + 快捷键数字 / 置顶浮窗 /
+  快捷键自定义）：
+  1. **仅粘贴文本**（`--action type|paste`）：引擎新增 `typer::paste_text()` —
+     纯文本写回剪贴板（arboard `set_text` 整体替换 → 天然剥离 RTF/HTML 格式），
+     再发一次 ⌘V/Ctrl+V。macOS 端 ⌘V 用**实键码 9**（raw）而非 Unicode 附加，
+     VNC 类只转发键码的环境同样有效；修饰键按「先 Press、发完必 Release」防
+     按住事故。CLI 贯通单次/热键/托盘三模式；Swift 设置与菜单新增「输入方式」
+     切换（键入 = 默认，仅粘贴文本），对主热键与历史条目统一生效。
+  2. **历史 + 快捷键数字**：历史默认上限 20 条（原 50）。新增「修饰键前缀 +
+     数字 1–9、0」直接键入第 N 条（默认 ⌃⇧+数字），走 `--stdin` 不碰剪贴板、
+     内容不进 ps。菜单子菜单条目改为**点选即输入**（原先只是放回剪贴板）。
+  3. **置顶浮窗**（[FloatingHistoryWindow.swift](app/macos/Sources/CliptypeApp/FloatingHistoryWindow.swift)）：
+     `nonactivatingPanel` + borderless + `.floating` + canJoinAllSpaces —— 点击条目
+     不激活本 App、不抢前台焦点，输入落在原焦点窗口。NSHostingView
+     `sizingOptions = .preferredContentSize` + entries 变更时 `fittingSize` 重算高度；
+     可拖动、单条删除、清空、展示数量 5/10/15/20 可设；上次可见状态重启恢复
+     （UserDefaults `floatWindowPreferred`）。
+  4. **快捷键自定义**：废弃四选一预设，改为**录制式**（[HotkeyRecorder.swift](app/macos/Sources/CliptypeApp/HotkeyRecorder.swift)：
+     点击 → keyDown 捕获（必须含修饰键）；Esc 取消、Backspace 清除；数字前缀控件
+     允许「只按修饰键然后松开」确定前缀）。v0.1.x 的 `hotkeyPresetId` 自动迁移。
+     **关键坑：Carbon 多热键注册时，InstallEventHandler 装在
+     GetApplicationEventTarget 上的 handler 会对每个热键事件全部回调** —
+     [HotkeyManager.swift](app/macos/Sources/CliptypeApp/HotkeyManager.swift) 现在每实例持有唯一
+     EventHotKeyID，handler 里读 `kEventParamDirectObject`（typeEventHotKeyID）
+     比对后才触发，否则 10 个数字热键会每按一次触发 10 次。
+- 验证：`cargo fmt` + `cargo clippy --all-features -- -D warnings` + `cargo test`
+  （10 通过，含新增 `--action` 解析测试）+ `swift build` 全绿；`--stdin --action
+  paste --dry-run` 输出正确。**真机键入 / ⌘V 发送、浮窗交互、热键录制未实测**
+  （需用户在可交互环境验证）。
+- 环境备忘：本机原本没有 Rust 工具链，本轮用 rustup 装了 stable（minimal profile
+  + rustfmt/clippy，`~/.cargo` / `~/.rustup`）。另外 CommandLineTools 的
+  SwiftPM 需要 `--disable-sandbox`（sandbox-exec 被拒）；新 SDK（macOS 27 beta）
+  里 `acceptFirstMouse(for:)` 签名变为可选参数，override 会报错，改用
+  `@objc(acceptFirstMouse:)` 私有方法实现。
+- 文档同步：README/CHANGELOG 双语、AGENTS.md/CLAUDE.md 结构说明、三语
+  Localizable.strings（新增约 20 键）。
+
 ## 2026-09-11
 
 - **v0.1.2 发布**（用户拍板）：https://github.com/Szyoo/cliptype/releases/tag/v0.1.2 ——

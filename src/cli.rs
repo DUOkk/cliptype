@@ -31,6 +31,13 @@ pub struct Args {
     #[arg(short, long, value_enum, default_value_t = Mode::Unicode)]
     pub mode: Mode,
 
+    /// What to do with the text. "type" (default) simulates keystrokes, which
+    /// also works where pasting is blocked; "paste" writes the plain text to
+    /// the clipboard (stripping rich formatting) and presses the paste
+    /// shortcut once — much faster for long texts
+    #[arg(short, long, value_enum, default_value_t = Action::Type)]
+    pub action: Action,
+
     /// Print what would be typed instead of typing it
     #[arg(long)]
     pub dry_run: bool,
@@ -106,6 +113,18 @@ impl From<Mode> for crate::typer::InputMode {
     }
 }
 
+/// テキストの入れ方（type_text / paste_text の CLI 表現）。
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum Action {
+    /// Simulated keystrokes, character by character (default). Also works in
+    /// input fields that block pasting — the tool's original purpose
+    #[default]
+    Type,
+    /// Write the plain text to the clipboard (stripping rich formatting) and
+    /// press the paste shortcut (⌘V / Ctrl+V) once
+    Paste,
+}
+
 impl Args {
     /// --speed / --interval を解決した実効の打鍵間隔（ミリ秒）。
     pub fn effective_interval_ms(&self) -> u64 {
@@ -149,6 +168,15 @@ mod tests {
         assert_eq!(
             Args::parse_from(["cliptype", "--mode", "keycode"]).input_mode(),
             InputMode::Keycode
+        );
+    }
+
+    #[test]
+    fn action_defaults_to_type_and_parses_paste() {
+        assert_eq!(Args::parse_from(["cliptype"]).action, Action::Type);
+        assert_eq!(
+            Args::parse_from(["cliptype", "--action", "paste"]).action,
+            Action::Paste
         );
     }
 

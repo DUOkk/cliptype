@@ -77,3 +77,27 @@
 "%d items stored" = "已保存 %d 条";
 "Clear history" = "清空历史";
 "No items yet" = "暂无记录";
+
+/* 输入方式（粘贴方式） */
+"Input method" = "输入方式";
+"Type as keystrokes" = "模拟键入";
+"Paste text only (⌘V)" = "仅粘贴文本（⌘V）";
+"Typing works even in input fields that block pasting — that is what cliptype was built for. \"Paste text only\" writes the plain text to the clipboard (stripping rich formatting) and presses ⌘V once: instant for long texts, but only works where pasting is allowed." = "模拟键入在禁止粘贴的输入框里也能用——这正是 cliptype 的初衷。「仅粘贴文本」会把纯文本写入剪贴板（去除富文本格式）并按一次 ⌘V：长文本瞬间完成，但只在允许粘贴的地方有效。";
+
+/* 快捷键（录制式设置） */
+"Shortcuts" = "快捷键";
+"Type the clipboard" = "键入剪贴板";
+"History item (number keys)" = "历史记录（配数字键）";
+"Show the history window" = "显示历史浮窗";
+"None" = "无";
+"Click a field, then press the key combination you want. Esc cancels recording; Backspace clears the shortcut. Combine the history prefix with the number keys 1–9 and 0 to input that history item." = "点击输入框后按下你想要的组合键。Esc 取消录制；退格键清除快捷键。用历史前缀组合数字键 1–9 和 0，即可直接输入对应的历史记录。";
+"⚠ %@ could not be registered — it may already be in use by another app." = "⚠ %@ 注册失败——可能已被其他应用占用。";
+
+/* 置顶浮窗 */
+"Floating history window" = "历史记录浮窗";
+"Shows an always-on-top window with your recent items. Click an item to input it; the window stays visible in every space." = "显示一个置顶小窗，列出最近的复制记录。点击条目即可输入；窗口在所有桌面空间保持可见。";
+"Items shown" = "展示数量";
+"Close" = "关闭";
+"Clear" = "清空";
+"%d chars" = "%d 字符";
+"Delete this item" = "删除该条记录";

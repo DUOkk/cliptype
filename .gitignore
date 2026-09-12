@@ -12,6 +12,9 @@ Thumbs.db
 .vscode/
 *.swp
 
+# Local agent workspace data
+.workbuddy/
+
 # Swift (macOS app)
 app/macos/.build/
 app/macos/.swiftpm/

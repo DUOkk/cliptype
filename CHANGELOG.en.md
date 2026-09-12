@@ -10,16 +10,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Clipboard history (basic, off by default)**: once enabled in Settings, the
+- **Input method: paste text only**: besides typing character by character
+  (the default, which works even where pasting is blocked), you can now choose
+  "Paste text only" — it writes the plain text back to the clipboard (stripping
+  rich formatting) and presses <kbd>⌘V</kbd> once. Instant for long texts and
+  formatting-free, but only works where pasting is allowed. Switchable from the
+  menu bar and Settings; applies to the main hotkey and history items alike.
+  CLI equivalent: `--action type|paste`.
+- **Clipboard history: hotkey + number**: with history enabled, press the
+  modifier prefix plus a number key 1–9, 0 (default <kbd>⌃⇧</kbd>+number) to
+  input that history item directly, without opening any UI. The history now
+  keeps 20 items by default (20/50/100 selectable); picking an item in the
+  menu-bar submenu now inputs it directly (previously it only went back to the
+  clipboard).
+- **Floating history window**: an optional always-on-top window lists your
+  recent copies (5/10/15/20 items selectable). Click an item to input it. The
+  window never steals focus, stays visible across all Spaces, and supports
+  dragging, per-item deletion and clearing.
+- **Customizable shortcuts**: every shortcut (type clipboard / history number
+  combo / toggle the history window) is now recorded rather than picked from
+  fixed presets — click the field and press the combination you want. Replaces
+  the old four-preset picker; existing choices are migrated automatically.
+  Failed registrations (combo already in use) are reported in Settings.
+- Clipboard history (basic, off by default): once enabled in Settings, the
   macOS app records the text you copy (deduplicated, capped at 20/50/100 items,
   100 KB per item), stored only on this Mac in the Application Support folder
   (mode 0600); items that password managers mark as concealed or transient are
-  skipped. A "Clipboard history" submenu in the menu bar lists recent items —
-  pick one to put it back on the clipboard, then type it with the hotkey. The
-  full history UI (popup panel etc.) will be decided in a later version.
+  skipped.
 - CLI: `--stdin` reads the text to type from standard input instead of the
   clipboard (used by the app to type a history item; the text never appears in
   the process arguments).
+- CLI: `--action type|paste` selects typing or paste-text-only delivery;
+  supported in one-shot, hotkey and tray modes.
 
 ## [0.1.2] - 2026-09-11
 

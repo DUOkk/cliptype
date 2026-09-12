@@ -27,18 +27,22 @@ enum Engine {
     }
 
     /// クリップボードの内容を鍵入する（ホットキーの既定動作）。
-    static func typeClipboard(intervalMs: Int, keycodeMode: Bool) async {
-        await run(stdinText: nil, intervalMs: intervalMs, keycodeMode: keycodeMode)
+    /// paste = true なら「テキストのみ貼り付け」（平文をクリップボードへ書き戻し
+    /// て ⌘V を 1 回）になる。
+    static func typeClipboard(intervalMs: Int, keycodeMode: Bool, paste: Bool) async {
+        await run(stdinText: nil, intervalMs: intervalMs, keycodeMode: keycodeMode, paste: paste)
     }
 
     /// 任意のテキストを鍵入する（クリップボード履歴の項目など）。
     /// テキストは引数ではなく標準入力で渡すので、`ps` 等に内容が漏れない。
-    static func typeText(_ text: String, intervalMs: Int, keycodeMode: Bool) async {
-        await run(stdinText: text, intervalMs: intervalMs, keycodeMode: keycodeMode)
+    static func typeText(_ text: String, intervalMs: Int, keycodeMode: Bool, paste: Bool) async {
+        await run(stdinText: text, intervalMs: intervalMs, keycodeMode: keycodeMode, paste: paste)
     }
 
     /// ホットキーの修飾キーが離されるのを待ってからエンジンを起動する。
-    private static func run(stdinText: String?, intervalMs: Int, keycodeMode: Bool) async {
+    private static func run(
+        stdinText: String?, intervalMs: Int, keycodeMode: Bool, paste: Bool
+    ) async {
         waitModifiersReleased()
 
         let process = Process()
@@ -49,6 +53,10 @@ enum Engine {
             // VNC / リモートコンソールは添付 Unicode を無視するため実キーコードで送る
             "--mode", keycodeMode ? "keycode" : "unicode",
         ]
+        if paste {
+            // 平文をクリップボードへ書き戻し（書式を落とす）て ⌘V を 1 回送る
+            arguments += ["--action", "paste"]
+        }
         if stdinText != nil {
             arguments.append("--stdin")
         }

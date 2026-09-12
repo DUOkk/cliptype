@@ -63,3 +63,27 @@
 "%d items stored" = "%d items stored";
 "Clear history" = "Clear history";
 "No items yet" = "No items yet";
+
+/* 入力方式（貼り付け方法） */
+"Input method" = "Input method";
+"Type as keystrokes" = "Type as keystrokes";
+"Paste text only (⌘V)" = "Paste text only (⌘V)";
+"Typing works even in input fields that block pasting — that is what cliptype was built for. \"Paste text only\" writes the plain text to the clipboard (stripping rich formatting) and presses ⌘V once: instant for long texts, but only works where pasting is allowed." = "Typing works even in input fields that block pasting — that is what cliptype was built for. \"Paste text only\" writes the plain text to the clipboard (stripping rich formatting) and presses ⌘V once: instant for long texts, but only works where pasting is allowed.";
+
+/* ショートカット（録音 UI） */
+"Shortcuts" = "Shortcuts";
+"Type the clipboard" = "Type the clipboard";
+"History item (number keys)" = "History item (number keys)";
+"Show the history window" = "Show the history window";
+"None" = "None";
+"Click a field, then press the key combination you want. Esc cancels recording; Backspace clears the shortcut. Combine the history prefix with the number keys 1–9 and 0 to input that history item." = "Click a field, then press the key combination you want. Esc cancels recording; Backspace clears the shortcut. Combine the history prefix with the number keys 1–9 and 0 to input that history item.";
+"⚠ %@ could not be registered — it may already be in use by another app." = "⚠ %@ could not be registered — it may already be in use by another app.";
+
+/* フローティングウィンドウ */
+"Floating history window" = "Floating history window";
+"Shows an always-on-top window with your recent items. Click an item to input it; the window stays visible in every space." = "Shows an always-on-top window with your recent items. Click an item to input it; the window stays visible in every space.";
+"Items shown" = "Items shown";
+"Close" = "Close";
+"Clear" = "Clear";
+"%d chars" = "%d chars";
+"Delete this item" = "Delete this item";

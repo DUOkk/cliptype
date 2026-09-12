@@ -6,6 +6,8 @@ use enigo::{Direction::Click, Enigo, Key, Keyboard, Settings};
 use std::thread;
 use std::time::Duration;
 
+use crate::clipboard;
+
 /// キーストロークの送り方。
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum InputMode {
@@ -52,6 +54,54 @@ pub fn type_text(text: &str, opts: &TypeOptions) -> Result<()> {
     // 末尾の文字が欠けることがある（実測で確認）。少し待ってから戻る。
     thread::sleep(Duration::from_millis(120));
     result
+}
+
+/// 「テキストのみ貼り付け」: 平文テキストをクリップボードへ書き戻してから
+/// 貼り付けショートカット（macOS は ⌘V、それ以外は Ctrl+V）を 1 回だけ送る。
+///
+/// `clipboard::set_text` はクリップボードを「テキスト 1 種類」で置き換えるため、
+/// 元の RTF / HTML 等の書式は落とされる。長文の入力が一瞬で済み、貼り付け
+/// 許可のある入力欄で書式なしのテキストを入れたい場面向け。
+pub fn paste_text(text: &str) -> Result<()> {
+    ensure_permission()?;
+    clipboard::set_text(&normalize_newlines(text))?;
+    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| {
+        anyhow!(
+            "failed to initialize keyboard simulation: {e}{}",
+            permission_hint()
+        )
+    })?;
+    send_paste(&mut enigo)?;
+    // 送信直後にプロセスが終了するとイベントが失われることがある（type_text と同じ理由）。
+    thread::sleep(Duration::from_millis(120));
+    Ok(())
+}
+
+/// 貼り付けショートカット（⌘V / Ctrl+V）を送る。
+fn send_paste(enigo: &mut Enigo) -> Result<()> {
+    use enigo::Direction::{Press, Release};
+
+    // macOS: 実キーコード 9 (V) を直接叩く。Unicode 文字列添付では VNC 等
+    // （ keycode のみ転送する環境）で "a" になるため、paste も実キーで送る。
+    #[cfg(target_os = "macos")]
+    const KEY: Key = Key::Meta;
+    #[cfg(not(target_os = "macos"))]
+    const KEY: Key = Key::Control;
+
+    enigo.key(KEY, Press).map_err(input_err)?;
+    let sent = {
+        #[cfg(target_os = "macos")]
+        {
+            enigo.raw(9, Click).map_err(input_err)
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            enigo.key(Key::Unicode('v'), Click).map_err(input_err)
+        }
+    };
+    // エラーでも修飾キーは必ず離す（押しっぱなし事故を防ぐ）
+    enigo.key(KEY, Release).map_err(input_err)?;
+    sent
 }
 
 /// 最速モード: 通常文字はまとめて `text()` で送り、改行・タブだけキー送信する。

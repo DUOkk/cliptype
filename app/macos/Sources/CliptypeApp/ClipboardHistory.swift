@@ -57,11 +57,11 @@ final class ClipboardHistory: ObservableObject {
         }
     }
 
-    /// 件数上限。
+    /// 件数上限。既定は 20 件。
     var maxEntries: Int {
         get {
             let v = UserDefaults.standard.integer(forKey: "historyMaxEntries")
-            return Self.maxEntriesOptions.contains(v) ? v : 50
+            return Self.maxEntriesOptions.contains(v) ? v : 20
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "historyMaxEntries")
@@ -123,6 +123,17 @@ final class ClipboardHistory: ObservableObject {
 
     // MARK: - 操作 API（UI から呼ぶ）
 
+    /// 先頭から index 番目（0 始まり）の項目。数字キーのクイック入力などで使う。
+    func entry(at index: Int) -> ClipEntry? {
+        guard entries.indices.contains(index) else { return nil }
+        return entries[index]
+    }
+
+    /// 項目を先頭へ移動する（入力・貼り付けのあとに呼ぶ）。
+    func moveEntryToTop(_ entry: ClipEntry) {
+        moveToTop(entry)
+    }
+
     /// 履歴の項目をクリップボードへ戻す（＝「現在の剪贴板」にする）。
     /// その後ホットキーで入力できる。自分で書いた変更は再記録せず先頭へ移すだけ。
     func copyToPasteboard(_ entry: ClipEntry) {
@@ -134,10 +145,8 @@ final class ClipboardHistory: ObservableObject {
     }
 
     /// 履歴の項目を直接キー入力する（クリップボードは変更しない）。
-    func type(_ entry: ClipEntry, intervalMs: Int, keycodeMode: Bool) async {
-        await Engine.typeText(entry.text, intervalMs: intervalMs, keycodeMode: keycodeMode)
-    }
-
+    /// 入力方式（鍵入 / テキストのみ貼り付け）の選択は AppState が持つため、
+    /// そこから Engine を呼ぶ形にした（inputHistoryEntry）。
     func remove(_ entry: ClipEntry) {
         entries.removeAll { $0.id == entry.id }
         save()

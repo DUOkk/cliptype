@@ -27,7 +27,7 @@ struct MainView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Text(L("Copy text, focus the target field, press %@.", state.hotkeyPreset.label))
+                Text(L("Copy text, focus the target field, press %@.", state.mainHotkey.label))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

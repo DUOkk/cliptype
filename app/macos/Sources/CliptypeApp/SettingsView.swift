@@ -7,21 +7,61 @@ struct SettingsView: View {
     @EnvironmentObject private var state: AppState
     @ObservedObject private var updater = Updater.shared
     @ObservedObject private var history = ClipboardHistory.shared
+    @ObservedObject private var floating = FloatingHistoryController.shared
 
     var body: some View {
         Form {
             Section {
-                Picker(L("Hotkey"), selection: hotkeyBinding) {
-                    ForEach(AppState.hotkeyPresets) { preset in
-                        Text(preset.label).tag(preset.id)
+                Picker(L("Input method"), selection: inputActionBinding) {
+                    ForEach(AppState.InputAction.allCases) { action in
+                        Text(action.label).tag(action)
                     }
                 }
-                .pickerStyle(.segmented)
-                Text(L("Focus the target field, press the hotkey, and the clipboard text is typed in."))
+                Text(L("Typing works even in input fields that block pasting — that is what cliptype was built for. \"Paste text only\" writes the plain text to the clipboard (stripping rich formatting) and presses ⌘V once: instant for long texts, but only works where pasting is allowed."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text(L("Hotkey"))
+                Text(L("Input method"))
+            }
+
+            Section {
+                LabeledContent(L("Type the clipboard")) {
+                    HotkeyRecorder(
+                        combo: mainHotkeyBinding,
+                        allowsModifiersOnly: false,
+                        allowsNone: false
+                    )
+                    .frame(height: 24)
+                }
+                LabeledContent(L("History item (number keys)")) {
+                    HotkeyRecorder(
+                        combo: historyHotkeyBinding,
+                        allowsModifiersOnly: true,
+                        allowsNone: true
+                    )
+                    .frame(height: 24)
+                }
+                LabeledContent(L("Show the history window")) {
+                    HotkeyRecorder(
+                        combo: floatHotkeyBinding,
+                        allowsModifiersOnly: false,
+                        allowsNone: true
+                    )
+                    .frame(height: 24)
+                }
+                Text(L("Click a field, then press the key combination you want. Esc cancels recording; Backspace clears the shortcut. Combine the history prefix with the number keys 1–9 and 0 to input that history item."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                ForEach(state.hotkeyErrors, id: \.self) { combo in
+                    Label(
+                        L("⚠ %@ could not be registered — it may already be in use by another app.", combo),
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                }
+            } header: {
+                Text(L("Shortcuts"))
             }
 
             Section {
@@ -52,7 +92,11 @@ struct SettingsView: View {
                     L("Keep a clipboard history"),
                     isOn: Binding(
                         get: { history.isEnabled },
-                        set: { history.isEnabled = $0 }
+                        set: {
+                            history.isEnabled = $0
+                            // 数字キーの登録・解除を反映する
+                            state.refreshHotkeys()
+                        }
                     )
                 )
                 Text(L("Stores the text you copy, on this Mac only, in your Application Support folder. Items that password managers mark as concealed are skipped. Off by default."))
@@ -79,6 +123,30 @@ struct SettingsView: View {
                             history.clear()
                         }
                         .disabled(history.entries.isEmpty)
+                    }
+
+                    Toggle(
+                        L("Floating history window"),
+                        isOn: Binding(
+                            get: { floating.isPreferred },
+                            set: { floating.setPreferred($0) }
+                        )
+                    )
+                    Text(L("Shows an always-on-top window with your recent items. Click an item to input it; the window stays visible in every space."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if floating.isPreferred {
+                        Picker(
+                            L("Items shown"),
+                            selection: Binding(
+                                get: { floating.count },
+                                set: { floating.count = $0 }
+                            )
+                        ) {
+                            ForEach(FloatingHistoryController.countOptions, id: \.self) { n in
+                                Text(L("%d items", n)).tag(n)
+                            }
+                        }
                     }
                 }
             } header: {
@@ -139,14 +207,44 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420)
+        .frame(width: 460)
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    private var hotkeyBinding: Binding<String> {
+    // MARK: - バインディング
+
+    private var inputActionBinding: Binding<AppState.InputAction> {
         Binding(
-            get: { state.hotkeySelection },
-            set: { state.hotkeySelection = $0 }
+            get: { state.inputAction },
+            set: { state.inputAction = $0 }
+        )
+    }
+
+    /// HotkeyRecorder は nil = 未設定を扱うため、AppState の保存値と相互変換する。
+    private var mainHotkeyBinding: Binding<HotkeyCombo?> {
+        Binding(
+            get: { state.mainHotkey },
+            set: { state.mainHotkey = $0 ?? state.mainHotkey }
+        )
+    }
+
+    private var historyHotkeyBinding: Binding<HotkeyCombo?> {
+        Binding(
+            get: {
+                let c = state.historyHotkey
+                return c.isUnset ? nil : c
+            },
+            set: { state.historyHotkey = $0 ?? HotkeyCombo(keyCode: 0, modifiers: 0) }
+        )
+    }
+
+    private var floatHotkeyBinding: Binding<HotkeyCombo?> {
+        Binding(
+            get: {
+                let c = state.floatHotkey
+                return c.isUnset ? nil : c
+            },
+            set: { state.floatHotkey = $0 ?? HotkeyCombo(keyCode: 0, modifiers: 0) }
         )
     }
 }

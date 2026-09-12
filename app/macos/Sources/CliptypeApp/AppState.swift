@@ -1,17 +1,8 @@
 // アプリ全体の状態と設定の永続化（UserDefaults 経由）。
 // メニューと設定ウィンドウの両方から同じインスタンスを参照する。
 
+import Carbon.HIToolbox
 import SwiftUI
-
-/// ホットキーのプリセット。任意キー録音 UI は将来課題とし、まずは定番の組み合わせから選ぶ。
-struct HotkeyPreset: Identifiable, Equatable {
-    let id: String
-    let label: String
-    /// Carbon の仮想キーコード
-    let keyCode: UInt32
-    /// Carbon の修飾キーフラグ（controlKey / shiftKey / optionKey / cmdKey の組み合わせ）
-    let modifiers: UInt32
-}
 
 @MainActor
 final class AppState: ObservableObject {
@@ -24,32 +15,49 @@ final class AppState: ObservableObject {
         (L("Careful (50 ms per key)"), 50),
     ]
 
-    /// 選べるホットキー。keyCode 9 = V, 11 = B, 35 = P（US 配列の仮想キーコード）
-    static let hotkeyPresets: [HotkeyPreset] = [
-        HotkeyPreset(
-            id: "ctrl-shift-v", label: "⌃⇧V", keyCode: 9,
-            modifiers: UInt32(controlKey | shiftKey)
-        ),
-        HotkeyPreset(
-            id: "ctrl-opt-v", label: "⌃⌥V", keyCode: 9,
-            modifiers: UInt32(controlKey | optionKey)
-        ),
-        HotkeyPreset(
-            id: "cmd-shift-b", label: "⌘⇧B", keyCode: 11,
-            modifiers: UInt32(cmdKey | shiftKey)
-        ),
-        HotkeyPreset(
-            id: "ctrl-shift-p", label: "⌃⇧P", keyCode: 35,
-            modifiers: UInt32(controlKey | shiftKey)
-        ),
-    ]
+    /// テキストの入れ方。
+    enum InputAction: String, CaseIterable, Identifiable {
+        /// 1 文字ずつシミュレートキー入力（既定）。貼り付け禁止の入力欄でも動く。
+        case type
+        /// 平文をクリップボードへ書き戻し（書式を落とす）て ⌘V を 1 回送る。
+        case pasteText
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .type: return L("Type as keystrokes")
+            case .pasteText: return L("Paste text only (⌘V)")
+            }
+        }
+    }
+
+    // 既定のホットキー。⌃⇧V（メイン）/ ⌃⇧+数字（履歴）/ ⌃⇧H（ウィンドウ）。
+    static let defaultMainHotkey = HotkeyCombo(
+        keyCode: 9, modifiers: UInt32(controlKey | shiftKey))
+    static let defaultHistoryHotkey = HotkeyCombo(
+        keyCode: 0, modifiers: UInt32(controlKey | shiftKey))
+    static let defaultFloatHotkey = HotkeyCombo(
+        keyCode: 4, modifiers: UInt32(controlKey | shiftKey))
 
     @AppStorage("intervalMs") var intervalMs: Int = 0
     /// 実キーコードモード（VNC / リモートコンソール / VM 向け）
     @AppStorage("keycodeMode") var keycodeMode: Bool = false
-    @AppStorage("hotkeyPresetId") private var hotkeyPresetId: String = "ctrl-shift-v"
+    @AppStorage("inputActionRaw") private var inputActionRaw: String = InputAction.type.rawValue
+
+    /// テキストの入れ方（貼り付け方式）。
+    var inputAction: InputAction {
+        get { InputAction(rawValue: inputActionRaw) ?? .type }
+        set {
+            inputActionRaw = newValue.rawValue
+            objectWillChange.send()
+        }
+    }
 
     @Published var isPaused = false
+
+    /// ホットキー登録に失敗した組み合わせ（設定画面に表示する）。
+    @Published private(set) var hotkeyErrors: [String] = []
 
     /// アクセシビリティ権限の現在値。メニュー/設定の表示はこれを参照する。
     /// AXIsProcessTrusted() を直接ビューで呼ぶと、付与後もメニューが
@@ -59,8 +67,17 @@ final class AppState: ObservableObject {
     /// 起動してから一度も権限を観測できていないか（＝案内を強めに出す条件）。
     @Published private(set) var permissionNeverSeen = !PermissionHelper.isTrusted()
 
-    private let hotkeyManager = HotkeyManager()
+    private let mainHotkeyManager = HotkeyManager()
+    private let floatHotkeyManager = HotkeyManager()
+    private lazy var digitHotkeyManagers: [HotkeyManager] = (0..<10).map { _ in HotkeyManager() }
     private var permissionTimer: Timer?
+
+    private init() {
+        // v0.1.x のプリセット選択から新形式（ keyCode + modifiers ）への移行
+        HotkeyStore.migrateFromPresetId()
+    }
+
+    // MARK: - 権限
 
     /// 権限状態の変化（付与・剥奪とも）を定期的に拾ってメニューへ反映する。
     ///
@@ -104,47 +121,123 @@ final class AppState: ObservableObject {
         }
     }
 
-    var hotkeyPreset: HotkeyPreset {
-        Self.hotkeyPresets.first { $0.id == hotkeyPresetId } ?? Self.hotkeyPresets[0]
+    // MARK: - ホットキー（任意の組み合わせを設定可能）
+
+    /// メイン（クリップボード入力）ホットキー。
+    var mainHotkey: HotkeyCombo {
+        get { HotkeyStore.load("hotkeyMain", default: Self.defaultMainHotkey) }
+        set { HotkeyStore.save(newValue, forKey: "hotkeyMain"); refreshHotkeys() }
     }
 
-    /// 設定ウィンドウからの変更用。再登録まで面倒を見る。
-    var hotkeySelection: String {
-        get { hotkeyPresetId }
-        set {
-            hotkeyPresetId = newValue
-            activateHotkey()
-            objectWillChange.send()
-        }
+    /// 履歴クイック入力の接頭辞（この修飾キー + 数字 1–9, 0）。
+    var historyHotkey: HotkeyCombo {
+        get { HotkeyStore.load("hotkeyHistory", default: Self.defaultHistoryHotkey) }
+        set { HotkeyStore.save(newValue, forKey: "hotkeyHistory"); refreshHotkeys() }
     }
 
-    /// 現在の設定でホットキーを（再）登録する。
+    /// フローティングウィンドウの切替ホットキー。
+    var floatHotkey: HotkeyCombo {
+        get { HotkeyStore.load("hotkeyFloat", default: Self.defaultFloatHotkey) }
+        set { HotkeyStore.save(newValue, forKey: "hotkeyFloat"); refreshHotkeys() }
+    }
+
+    /// 起動時に呼ぶ。現在の設定で全ホットキーを（再）登録する。
     func activateHotkey() {
-        let preset = hotkeyPreset
-        hotkeyManager.onPressed = { [weak self] in
-            Task { @MainActor in
-                self?.handleHotkey()
+        refreshHotkeys()
+    }
+
+    /// 設定変更時に呼ぶ。メイン / 数字 / ウィンドウ切替を登録し直す。
+    /// 履歴が無効のときは数字キーを登録しない。
+    func refreshHotkeys() {
+        objectWillChange.send()
+        var errors: [String] = []
+
+        // メイン（クリップボード入力）
+        mainHotkeyManager.onPressed = { [weak self] in
+            Task { @MainActor in self?.handleHotkey() }
+        }
+        register(mainHotkeyManager, combo: mainHotkey, errors: &errors)
+
+        // フローティングウィンドウ切替（未設定なら登録しない）
+        floatHotkeyManager.onPressed = { [weak self] in
+            Task { @MainActor in self?.handleFloatToggle() }
+        }
+        register(floatHotkeyManager, combo: floatHotkey, errors: &errors)
+
+        // 履歴クイック入力（履歴が有効なときだけ数字キー 1–9, 0 を登録）
+        let historyEnabled = ClipboardHistory.shared.isEnabled
+        let historyMods = historyHotkey.modifiers
+        for (index, manager) in digitHotkeyManagers.enumerated() {
+            manager.unregister()
+            manager.onPressed = { [weak self] in
+                Task { @MainActor in self?.handleHistoryIndex(index) }
+            }
+            guard historyEnabled, historyMods != 0 else { continue }
+            do {
+                try manager.register(
+                    keyCode: HotkeyCombo.digitKeyCodes[index], modifiers: historyMods)
+            } catch {
+                errors.append("\(HotkeyCombo.modifierSymbols(historyMods))\(HotkeyCombo.digitLabels[index])")
             }
         }
-        do {
-            try hotkeyManager.register(keyCode: preset.keyCode, modifiers: preset.modifiers)
-            NSLog("cliptype: hotkey registered: \(preset.label)")
-        } catch {
-            NSLog("cliptype: failed to register hotkey: \(error.localizedDescription)")
+
+        hotkeyErrors = errors
+        for combo in errors {
+            NSLog("cliptype: failed to register hotkey: \(combo)")
         }
     }
 
+    private func register(_ manager: HotkeyManager, combo: HotkeyCombo, errors: inout [String]) {
+        manager.unregister()
+        guard !combo.isUnset, combo.keyCode != 0 else { return }
+        do {
+            try manager.register(keyCode: combo.keyCode, modifiers: combo.modifiers)
+            NSLog("cliptype: hotkey registered: \(combo.label)")
+        } catch {
+            NSLog("cliptype: failed to register hotkey: \(error.localizedDescription)")
+            errors.append(combo.label)
+        }
+    }
+
+    // MARK: - 押下ハンドラ
+
     private func handleHotkey() {
-        NSLog("cliptype: hotkey pressed (paused=\(isPaused))")
         guard !isPaused else { return }
         let interval = intervalMs
         let keycode = keycodeMode
+        let paste = inputAction == .pasteText
         // 数百 ms かかるためメインスレッドを塞がない
         Task.detached(priority: .userInitiated) {
-            await Engine.typeClipboard(intervalMs: interval, keycodeMode: keycode)
+            await Engine.typeClipboard(
+                intervalMs: interval, keycodeMode: keycode, paste: paste)
         }
     }
-}
 
-// Carbon の修飾キー定数を SwiftUI 側でも使えるように import しておく
-import Carbon.HIToolbox
+    /// 履歴の index 番目（0 始まり。9 が「0」キー担当）を入力する。
+    func handleHistoryIndex(_ index: Int) {
+        guard !isPaused else { return }
+        inputHistoryEntry(at: index)
+    }
+
+    /// 履歴項目を現在の入力方式で入力する（メニュー / 浮動ウィンドウからも使う）。
+    /// 入力後はその項目を先頭へ移動する。
+    func inputHistoryEntry(at index: Int) {
+        guard let entry = ClipboardHistory.shared.entry(at: index) else { return }
+        inputHistoryEntry(entry)
+    }
+
+    func inputHistoryEntry(_ entry: ClipEntry) {
+        let interval = intervalMs
+        let keycode = keycodeMode
+        let paste = inputAction == .pasteText
+        ClipboardHistory.shared.moveEntryToTop(entry)
+        Task.detached(priority: .userInitiated) {
+            await Engine.typeText(
+                entry.text, intervalMs: interval, keycodeMode: keycode, paste: paste)
+        }
+    }
+
+    private func handleFloatToggle() {
+        FloatingHistoryController.shared.toggle()
+    }
+}

@@ -16,3 +16,14 @@ pub fn read_text() -> Result<String> {
         Err(e) => Err(e).context("failed to read text from the clipboard"),
     }
 }
+
+/// クリップボードへ平文テキストを書き込む。
+///
+/// `set_text` はクリップボード全体を「テキスト 1 種類」で置き換えるため、
+/// RTF / HTML などの書式付きデータは取り除かれる（＝「テキストのみ貼り付け」）。
+pub fn set_text(text: &str) -> Result<()> {
+    let mut clipboard = Clipboard::new().context("failed to access the system clipboard")?;
+    clipboard
+        .set_text(text.to_owned())
+        .context("failed to write text to the clipboard")
+}

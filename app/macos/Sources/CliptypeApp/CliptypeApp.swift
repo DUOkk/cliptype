@@ -51,6 +51,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Updater.shared.scheduleAutomaticChecks()
         // クリップボード履歴（既定オフ。有効化したユーザーだけ監視が動く）
         ClipboardHistory.shared.startIfEnabled()
+        // 前回フローティングウィンドウを表示していたら復元する
+        if ClipboardHistory.shared.isEnabled, FloatingHistoryController.shared.isPreferred {
+            FloatingHistoryController.shared.show()
+        }
 
         // アップデート直後に権限が戻らない場合（TCC の古いレコードが残っている）、
         // 放置すると「許可したのに動かない」状態になるので手順を明示する。
@@ -72,7 +76,7 @@ struct MenuContent: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Text("cliptype \(Updater.currentVersion) — \(state.hotkeyPreset.label)")
+        Text("cliptype \(Updater.currentVersion) — \(state.mainHotkey.label)")
 
         if !state.axTrusted {
             // 設定画面に詳しい手順（古いレコードの削除）があるのでそちらへ誘導する
@@ -99,18 +103,27 @@ struct MenuContent: View {
             }
         }
 
+        Picker(L("Input method"), selection: inputActionBinding) {
+            ForEach(AppState.InputAction.allCases) { action in
+                Text(action.label).tag(action)
+            }
+        }
+
         Toggle(L("Remote console mode (VNC / VM)"), isOn: $state.keycodeMode)
 
-        // 履歴の仮 UI（サブメニュー）。最終的な形（ポップアップ等）は別途決める。
-        // 項目を選ぶとクリップボードへ戻す → いつものホットキーで入力できる。
+        // 履歴。数字キーのクイック入力（⌃⇧+1–9, 0）もここに表示する。
         if history.isEnabled {
             Menu(L("Clipboard history")) {
                 if history.entries.isEmpty {
                     Text(L("No items yet"))
                 } else {
-                    ForEach(history.entries.prefix(15)) { entry in
-                        Button(entry.preview) {
-                            history.copyToPasteboard(entry)
+                    ForEach(
+                        Array(history.entries.prefix(15).enumerated()), id: \.element.id
+                    ) { index, entry in
+                        let badge = index < HotkeyCombo.digitLabels.count
+                            ? HotkeyCombo.digitLabels[index] + ". " : ""
+                        Button(badge + entry.preview) {
+                            AppState.shared.inputHistoryEntry(entry)
                         }
                     }
                     Divider()
@@ -119,6 +132,14 @@ struct MenuContent: View {
                     }
                 }
             }
+
+            Toggle(
+                L("Floating history window"),
+                isOn: Binding(
+                    get: { FloatingHistoryController.shared.isPreferred },
+                    set: { FloatingHistoryController.shared.setPreferred($0) }
+                )
+            )
         }
 
         Divider()
@@ -136,5 +157,12 @@ struct MenuContent: View {
         Button(L("Quit cliptype")) {
             NSApplication.shared.terminate(nil)
         }
+    }
+
+    private var inputActionBinding: Binding<AppState.InputAction> {
+        Binding(
+            get: { state.inputAction },
+            set: { state.inputAction = $0 }
+        )
     }
 }

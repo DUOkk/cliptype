@@ -13,8 +13,9 @@ macOS 为主要开发平台。计划见 [docs/implementation-plan.md](docs/imple
 ## 结构
 
 - [src/main.rs](src/main.rs) — 入口，按参数分派；[src/cli.rs](src/cli.rs) — clap 参数
-- [src/clipboard.rs](src/clipboard.rs) — arboard 读剪贴板；[src/typer.rs](src/typer.rs) — enigo 键入 + macOS 权限检测；
-  两种发送模式：`unicode`（默认，任意字符/IME 免疫）与 `keycode`（真实键码，VNC/远程控制台/VM 必需）
+- [src/clipboard.rs](src/clipboard.rs) — arboard 读写剪贴板；[src/typer.rs](src/typer.rs) — enigo 键入 +
+  macOS 权限检测；两种发送模式：`unicode`（默认，任意字符/IME 免疫）与 `keycode`（真实键码，VNC/远程控制台/VM 必需）；
+  另有 `--action paste`：纯文本写回剪贴板（剥离格式）+ 一次 ⌘V/Ctrl+V（「仅粘贴文本」）
 - [src/keymap.rs](src/keymap.rs) — macOS：键盘布局→键码查表（UCKeyTranslate）+ 发送期间临时切 ASCII 输入源
 - [src/hotkey.rs](src/hotkey.rs) — feature `hotkey`：常驻热键（macOS 事件循环必须用
   Carbon `RunApplicationEventLoop`，见 PROGRESS）
@@ -23,6 +24,13 @@ macOS 为主要开发平台。计划见 [docs/implementation-plan.md](docs/imple
 - [src/config.rs](src/config.rs) — 托盘设置持久化（std 手写解析，无新依赖）
 - [app/macos/](app/macos/) — SwiftUI 菜单栏应用（MenuBarExtra + Settings + Carbon 热键，
   调用同捆 Rust 引擎；键入实现只在 Rust 侧维护）
+- [app/macos/.../ClipboardHistory.swift](app/macos/Sources/CliptypeApp/ClipboardHistory.swift) —
+  剪贴板历史（默认 20 条；`--stdin` 传内容不经参数）
+- [app/macos/.../FloatingHistoryWindow.swift](app/macos/Sources/CliptypeApp/FloatingHistoryWindow.swift) —
+  置顶浮窗（nonactivatingPanel，不抢焦点、全 Space 可见，展示数量可设）
+- [app/macos/.../HotkeyCombo.swift](app/macos/Sources/CliptypeApp/HotkeyCombo.swift) /
+  [HotkeyRecorder.swift](app/macos/Sources/CliptypeApp/HotkeyRecorder.swift) / [HotkeyManager.swift](app/macos/Sources/CliptypeApp/HotkeyManager.swift) —
+  快捷键模型（录制式自定义，旧预设自动迁移）、录制控件、Carbon 多热键注册（按 EventHotKeyID 分发）
 - [app/macos/.../Updater.swift](app/macos/Sources/CliptypeApp/Updater.swift) — 应用内更新（GitHub Releases
   latest → 下载 universal zip → sha256 校验 → bash 助手替换 .app 并重启；资产名后缀与 release.yml 耦合）
 - [scripts/bundle-macos.sh](scripts/bundle-macos.sh) — 组装 dist/Cliptype.app

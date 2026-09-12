@@ -21,7 +21,7 @@ use tao::event_loop::{ControlFlow, EventLoopBuilder};
 use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 use tray_icon::{Icon, TrayIcon, TrayIconBuilder};
 
-use crate::{config, hotkey, typer};
+use crate::{cli::Action, config, hotkey, typer};
 
 /// 速度プリセット（メニュー表示名と interval 値）。
 const SPEED_PRESETS: &[(&str, u64)] = &[
@@ -40,6 +40,7 @@ pub fn run(
     combo: &str,
     cli_interval: Duration,
     mode: typer::InputMode,
+    action: Action,
     dry_run: bool,
 ) -> Result<()> {
     // 常駐を始める前に権限を確認して早期に失敗させる
@@ -89,7 +90,7 @@ pub fn run(
                     typer::InputMode::Unicode
                 };
                 // 1 回の失敗で常駐を落とさない。エラーにクリップボード内容は含めない。
-                if let Err(err) = hotkey::handle_press(interval, mode, dry_run) {
+                if let Err(err) = hotkey::handle_press(interval, mode, action, dry_run) {
                     eprintln!("error: {err:#}");
                 }
             }
